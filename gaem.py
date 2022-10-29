@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import math
 
 import _mysdl2
 
@@ -25,6 +26,11 @@ SDL_TEXTINPUT = 0x303
 SDL_KEYMAPCHANGED = 0x304
 SDL_TEXTEDITING_EXT = 0x305
 
+SDL_MOUSEMOTION = 0x400
+SDL_MOUSEBUTTONDOWN = 0x401
+SDL_MOUSEBUTTONUP = 0x402
+SDL_MOUSEWHEEL = 0x403
+
 SDLK_SCANCODE_MASK = 1 << 30
 
 
@@ -35,9 +41,14 @@ class g:  # yes, globals, wanna fight?
     screen_width = 0
     screen_height = 0
     pressed_keys = set()
+    mouse_x = 0
+    mouse_y = 0
+    pressed_mouse_buttons = set()
 
 
-def run(game, *, title='Gaem', width=800, height=480, x=None, y=None):
+def run(
+    game, *, title='Gaem', width=800, height=480, x=None, y=None, vsync=False
+):
     ret = _mysdl2.lib.SDL_Init(SDL_INIT_EVERYTHING)
     raise_for_neg(ret)
 
@@ -56,9 +67,10 @@ def run(game, *, title='Gaem', width=800, height=480, x=None, y=None):
     g.win = _mysdl2.lib.SDL_CreateWindow(title, x, y, width, height, flags)
     raise_for_null(g.win)
 
-    g.ren = _mysdl2.lib.SDL_CreateRenderer(
-        g.win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
-    )
+    flags = SDL_RENDERER_ACCELERATED
+    if vsync:
+        flags |= SDL_RENDERER_PRESENTVSYNC
+    g.ren = _mysdl2.lib.SDL_CreateRenderer(g.win, -1, flags)
     raise_for_null(g.ren)
 
     game.on_load()
@@ -89,6 +101,30 @@ def run(game, *, title='Gaem', width=800, height=480, x=None, y=None):
                 event = KeyboardEvent.from_sdl_event(sdl_kb_event)
                 g.pressed_keys.discard(event.scancode)
                 game.on_keyup(event)
+            elif ev_type == SDL_MOUSEMOTION:
+                sdl_mouse_motion_event = _mysdl2.ffi.cast(
+                    'struct SDL_MouseMotionEvent *', sdl2_event
+                )
+                event = MouseMotionEvent.from_sdl_event(sdl_mouse_motion_event)
+                g.mouse_x = event.x
+                g.mouse_y = event.y
+                game.on_mousemotion(event)
+            elif ev_type == SDL_MOUSEBUTTONDOWN:
+                sdl_mouse_button_event = _mysdl2.ffi.cast(
+                    'struct SDL_MouseButtonEvent *', sdl2_event)
+                event = MouseButtonEvent.from_sdl_event(sdl_mouse_button_event)
+                g.mouse_x = event.x
+                g.mouse_y = event.y
+                g.pressed_mouse_buttons.add(event.button)
+                game.on_mousedown(event)
+            elif ev_type == SDL_MOUSEBUTTONUP:
+                sdl_mouse_button_event = _mysdl2.ffi.cast(
+                    'struct SDL_MouseButtonEvent *', sdl2_event)
+                event = MouseButtonEvent.from_sdl_event(sdl_mouse_button_event)
+                g.mouse_x = event.x
+                g.mouse_y = event.y
+                g.pressed_mouse_buttons.discard(event.button)
+                game.on_mouseup(event)
         _mysdl2.lib.SDL_RenderClear(g.ren)
         if previous_ticks:
             current_ticks = _mysdl2.lib.SDL_GetPerformanceCounter()
@@ -111,26 +147,32 @@ class Image:
         self.texture = texture
         self.width = width
         self.height = height
-        self._dstrect = _mysdl2.ffi.new('SDL_FRect * dstrect')
+        self._dstrect = _mysdl2.ffi.new('SDL_FRect *')
+        self._center = _mysdl2.ffi.new('SDL_FPoint *')
 
     def __del__(self):
         _mysdl2.lib.SDL_DestroyTexture(self.texture)
 
-    def render(self, renderer, *, x, y):
+    def render(self, renderer, *, x, y, sx, sy, cx, cy, angle):
         dstrect = self._dstrect
-        dstrect.x = x
-        dstrect.y = y
-        dstrect.w = self.width
-        dstrect.h = self.height
+        center = self._center
+        offset_x = cx * sx
+        offset_y = cy * sy
+        dstrect.x = x - offset_x
+        dstrect.y = y - offset_y
+        dstrect.w = self.width * sx
+        dstrect.h = self.height * sy
+        center.x = offset_x
+        center.y = offset_y
         _mysdl2.lib.SDL_RenderCopyExF(
-            renderer, self.texture, NULL, dstrect, 0.0, NULL, 0
+            renderer, self.texture, NULL, dstrect, angle/math.tau*360.0, center, 0
         )
 
 
 @dataclass
 class KeyboardEvent:
-    scancode: object
-    keycode: object
+    scancode: str
+    keycode: str
 
     @classmethod
     def from_sdl_event(cls, sdl_kb_event):
@@ -146,6 +188,46 @@ class KeyboardEvent:
         )
 
 
+@dataclass
+class MouseMotionEvent:
+    which: int
+    state: int
+    x: int
+    y: int
+    xrel: int
+    yrel: int
+
+    @classmethod
+    def from_sdl_event(cls, sdl_mouse_motion_event):
+        return cls(
+            which=sdl_mouse_motion_event.which,
+            state=sdl_mouse_motion_event.state,
+            x=sdl_mouse_motion_event.x,
+            y=sdl_mouse_motion_event.y,
+            xrel=sdl_mouse_motion_event.xrel,
+            yrel=sdl_mouse_motion_event.yrel,
+        )
+
+@dataclass
+class MouseButtonEvent:
+    which: int
+    button: int
+    state: int
+    clicks: int
+    x: int
+    y: int
+
+    @classmethod
+    def from_sdl_event(cls, sdl_mouse_button_event):
+        return cls(
+            which=sdl_mouse_button_event.which,
+            button=sdl_mouse_button_event.button,
+            state=sdl_mouse_button_event.state,
+            clicks=sdl_mouse_button_event.clicks,
+            x=sdl_mouse_button_event.x,
+            y=sdl_mouse_button_event.y,
+        )
+
 def load_image(path):
     surf = _mysdl2.lib.IMG_Load(to_cstr(path))
     raise_for_null(surf)
@@ -156,8 +238,8 @@ def load_image(path):
     return img
 
 
-def draw(drawable, *, x=0, y=0):
-    drawable.render(g.ren, x=x, y=y)
+def draw(drawable, *, x=0, y=0, sx=1.0, sy=1.0, cx=0.0, cy=0.0, angle=0.0):
+    drawable.render(g.ren, x=x, y=y, sx=sx, sy=sy, cx=cx, cy=cy, angle=angle)
 
 
 def get_screen_size():
@@ -166,6 +248,10 @@ def get_screen_size():
 
 def is_key_pressed(scancode):
     return scancode in g.pressed_keys
+
+
+def is_mouse_button_pressed(button = 1):
+    return button in g.pressed_mouse_buttons
 
 
 def quit():
@@ -210,6 +296,15 @@ class Game:
         pass
 
     def on_keyup(self, event):
+        pass
+
+    def on_mousemotion(self, event):
+        pass
+
+    def on_mousedown(self, event):
+        pass
+
+    def on_mouseup(self, event):
         pass
 
     def on_quit(self):

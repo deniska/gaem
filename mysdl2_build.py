@@ -107,6 +107,33 @@ typedef struct SDL_KeyboardEvent
     SDL_Keysym keysym;
 } SDL_KeyboardEvent;
 
+typedef struct SDL_MouseMotionEvent
+{
+    Uint32 type;
+    Uint32 timestamp;
+    Uint32 windowID;
+    Uint32 which;
+    Uint32 state;
+    Sint32 x;
+    Sint32 y;
+    Sint32 xrel;
+    Sint32 yrel;
+} SDL_MouseMotionEvent;
+
+typedef struct SDL_MouseButtonEvent
+{
+    Uint32 type;
+    Uint32 timestamp;
+    Uint32 windowID;
+    Uint32 which;
+    Uint8 button;
+    Uint8 state;
+    Uint8 clicks;
+    Uint8 padding1;
+    Sint32 x;
+    Sint32 y;
+} SDL_MouseButtonEvent;
+
 SDL_Renderer * SDL_CreateRenderer(SDL_Window * window,
                        int index, uint32_t flags);
 void SDL_DestroyRenderer(SDL_Renderer * renderer);

@@ -1,5 +1,6 @@
-import gaem
 import math
+
+import gaem
 
 
 class Game(gaem.Game):
@@ -36,7 +37,7 @@ class Game(gaem.Game):
             self.scale = 0.5
         elif event.button == 3:
             self.scale = 2.0
-    
+
     def on_mouseup(self, event):
         self.scale = 1.0
 

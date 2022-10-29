@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 import _mysdl2
 
@@ -111,7 +111,8 @@ def run(
                 game.on_mousemotion(event)
             elif ev_type == SDL_MOUSEBUTTONDOWN:
                 sdl_mouse_button_event = _mysdl2.ffi.cast(
-                    'struct SDL_MouseButtonEvent *', sdl2_event)
+                    'struct SDL_MouseButtonEvent *', sdl2_event
+                )
                 event = MouseButtonEvent.from_sdl_event(sdl_mouse_button_event)
                 g.mouse_x = event.x
                 g.mouse_y = event.y
@@ -119,7 +120,8 @@ def run(
                 game.on_mousedown(event)
             elif ev_type == SDL_MOUSEBUTTONUP:
                 sdl_mouse_button_event = _mysdl2.ffi.cast(
-                    'struct SDL_MouseButtonEvent *', sdl2_event)
+                    'struct SDL_MouseButtonEvent *', sdl2_event
+                )
                 event = MouseButtonEvent.from_sdl_event(sdl_mouse_button_event)
                 g.mouse_x = event.x
                 g.mouse_y = event.y
@@ -165,7 +167,13 @@ class Image:
         center.x = offset_x
         center.y = offset_y
         _mysdl2.lib.SDL_RenderCopyExF(
-            renderer, self.texture, NULL, dstrect, angle/math.tau*360.0, center, 0
+            renderer,
+            self.texture,
+            NULL,
+            dstrect,
+            angle / math.tau * 360.0,
+            center,
+            0,
         )
 
 
@@ -208,6 +216,7 @@ class MouseMotionEvent:
             yrel=sdl_mouse_motion_event.yrel,
         )
 
+
 @dataclass
 class MouseButtonEvent:
     which: int
@@ -227,6 +236,7 @@ class MouseButtonEvent:
             x=sdl_mouse_button_event.x,
             y=sdl_mouse_button_event.y,
         )
+
 
 def load_image(path):
     surf = _mysdl2.lib.IMG_Load(to_cstr(path))
@@ -250,8 +260,12 @@ def is_key_pressed(scancode):
     return scancode in g.pressed_keys
 
 
-def is_mouse_button_pressed(button = 1):
+def is_mouse_button_pressed(button=1):
     return button in g.pressed_mouse_buttons
+
+
+def get_mouse_position():
+    return (g.mouse_x, g.mouse_y)
 
 
 def quit():

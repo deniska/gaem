@@ -3,6 +3,7 @@ import random
 import gaem
 
 MAX_SPEED = 200
+KB_ACCEL = 500
 
 
 class Game(gaem.Game):
@@ -21,6 +22,14 @@ class Game(gaem.Game):
 
     def on_update(self, dt):
         w, h = gaem.get_screen_size()
+        if gaem.is_key_pressed('left'):
+            self.dx -= KB_ACCEL * dt
+        if gaem.is_key_pressed('right'):
+            self.dx += KB_ACCEL * dt
+        if gaem.is_key_pressed('up'):
+            self.dy -= KB_ACCEL * dt
+        if gaem.is_key_pressed('down'):
+            self.dy += KB_ACCEL * dt
         self.x += self.dx * dt
         self.y += self.dy * dt
         if self.x < 0:
@@ -37,8 +46,13 @@ class Game(gaem.Game):
             self.dy *= -1
 
     def on_keydown(self, event):
-        if event.scancode == 'space':
+        if event.scancode == 'r':
             self.reset_speed()
+        elif event.scancode == 'space':
+            self.dx = 0
+            self.dy = 0
+        elif event.scancode == 'escape':
+            gaem.quit()
 
 
 gaem.run(Game(), title='Logo bounce')

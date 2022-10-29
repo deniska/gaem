@@ -86,8 +86,6 @@ def run(game, *, title='Gaem', width=800, height=480, x=None, y=None):
                 sdl_kb_event = _mysdl2.ffi.cast(
                     'struct SDL_KeyboardEvent *', sdl2_event
                 )
-                if sdl_kb_event.repeat:
-                    continue
                 event = KeyboardEvent.from_sdl_event(sdl_kb_event)
                 g.pressed_keys.discard(event.scancode)
                 game.on_keyup(event)
@@ -164,6 +162,14 @@ def draw(drawable, *, x=0, y=0):
 
 def get_screen_size():
     return (g.screen_width, g.screen_height)
+
+
+def is_key_pressed(scancode):
+    return scancode in g.pressed_keys
+
+
+def quit():
+    g.should_quit = True
 
 
 def raise_for_neg(ret):

@@ -31,6 +31,9 @@ SDL_MOUSEBUTTONDOWN = 0x401
 SDL_MOUSEBUTTONUP = 0x402
 SDL_MOUSEWHEEL = 0x403
 
+SDL_FLIP_HORIZONTAL = 0x00000001
+SDL_FLIP_VERTICAL = 0x00000002
+
 SDLK_SCANCODE_MASK = 1 << 30
 
 
@@ -44,6 +47,7 @@ class g:  # yes, globals, wanna fight?
     mouse_x = 0
     mouse_y = 0
     pressed_mouse_buttons = set()
+    background_color = (0, 0, 0, 255)
 
 
 def run(
@@ -127,6 +131,7 @@ def run(
                 g.mouse_y = event.y
                 g.pressed_mouse_buttons.discard(event.button)
                 game.on_mouseup(event)
+        _mysdl2.lib.SDL_SetRenderDrawColor(g.ren, *g.background_color)
         _mysdl2.lib.SDL_RenderClear(g.ren)
         if previous_ticks:
             current_ticks = _mysdl2.lib.SDL_GetPerformanceCounter()
@@ -156,6 +161,13 @@ class Image:
         _mysdl2.lib.SDL_DestroyTexture(self.texture)
 
     def render(self, renderer, *, x, y, sx, sy, cx, cy, angle):
+        flip_flags = 0
+        if sx < 0:
+            sx = -sx
+            flip_flags |= SDL_FLIP_HORIZONTAL
+        elif sy < 0:
+            sy = -sy
+            flip_flags |= SDL_FLIP_VERTICAL
         dstrect = self._dstrect
         center = self._center
         offset_x = cx * sx
@@ -171,9 +183,9 @@ class Image:
             self.texture,
             NULL,
             dstrect,
-            angle / math.tau * 360.0,
+            -angle / math.tau * 360.0,
             center,
-            0,
+            flip_flags,
         )
 
 
@@ -266,6 +278,10 @@ def is_mouse_button_pressed(button=1):
 
 def get_mouse_position():
     return (g.mouse_x, g.mouse_y)
+
+
+def set_background_color(red, green, blue, alpha=255):
+    g.background_color = (red, green, blue, alpha)
 
 
 def quit():

@@ -150,6 +150,9 @@ int SDL_RenderCopyExF(SDL_Renderer * renderer,
                     const double angle,
                     const SDL_FPoint *center,
                     const int flip);
+int SDL_SetRenderDrawColor(SDL_Renderer * renderer,
+                   Uint8 r, Uint8 g, Uint8 b,
+                   Uint8 a);
 
 SDL_Texture * SDL_CreateTextureFromSurface(SDL_Renderer * renderer, SDL_Surface * surface);
 void SDL_DestroyTexture(SDL_Texture * texture);

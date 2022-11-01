@@ -107,7 +107,7 @@ def run(
                 g.should_quit = bool(ret)
             elif ev_type == SDL_KEYDOWN:
                 sdl_kb_event = _mysdl2.ffi.cast(
-                    'struct SDL_KeyboardEvent *', sdl2_event
+                    'SDL_KeyboardEvent *', sdl2_event
                 )
                 if sdl_kb_event.repeat:
                     continue
@@ -116,14 +116,14 @@ def run(
                 game.on_keydown(event)
             elif ev_type == SDL_KEYUP:
                 sdl_kb_event = _mysdl2.ffi.cast(
-                    'struct SDL_KeyboardEvent *', sdl2_event
+                    'SDL_KeyboardEvent *', sdl2_event
                 )
                 event = KeyboardEvent.from_sdl_event(sdl_kb_event)
                 g.pressed_keys.discard(event.scancode)
                 game.on_keyup(event)
             elif ev_type == SDL_MOUSEMOTION:
                 sdl_mouse_motion_event = _mysdl2.ffi.cast(
-                    'struct SDL_MouseMotionEvent *', sdl2_event
+                    'SDL_MouseMotionEvent *', sdl2_event
                 )
                 event = MouseMotionEvent.from_sdl_event(sdl_mouse_motion_event)
                 g.mouse_x = event.x
@@ -131,7 +131,7 @@ def run(
                 game.on_mousemotion(event)
             elif ev_type == SDL_MOUSEBUTTONDOWN:
                 sdl_mouse_button_event = _mysdl2.ffi.cast(
-                    'struct SDL_MouseButtonEvent *', sdl2_event
+                    'SDL_MouseButtonEvent *', sdl2_event
                 )
                 event = MouseButtonEvent.from_sdl_event(sdl_mouse_button_event)
                 g.mouse_x = event.x
@@ -140,7 +140,7 @@ def run(
                 game.on_mousedown(event)
             elif ev_type == SDL_MOUSEBUTTONUP:
                 sdl_mouse_button_event = _mysdl2.ffi.cast(
-                    'struct SDL_MouseButtonEvent *', sdl2_event
+                    'SDL_MouseButtonEvent *', sdl2_event
                 )
                 event = MouseButtonEvent.from_sdl_event(sdl_mouse_button_event)
                 g.mouse_x = event.x
@@ -149,7 +149,7 @@ def run(
                 game.on_mouseup(event)
             elif ev_type == SDL_WINDOWEVENT:
                 sdl_window_event = _mysdl2.ffi.cast(
-                    'struct SDL_WindowEvent *', sdl2_event
+                    'SDL_WindowEvent *', sdl2_event
                 )
                 if sdl_window_event.event == SDL_WINDOWEVENT_SIZE_CHANGED:
                     event = ResizeEvent(

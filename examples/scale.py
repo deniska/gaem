@@ -5,7 +5,7 @@ SPEED = 3
 
 class ScaleExample(gaem.Game):
     def on_load(self):
-        self.hello_img = gaem.load_image('examples/hello.png')
+        self.hello_img = gaem.load_image('assets/hello.png')
         w, h = gaem.get_screen_size()
         self.hello_img.x = w / 2
         self.hello_img.y = h / 2

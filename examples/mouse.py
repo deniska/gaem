@@ -5,7 +5,7 @@ import gaem
 
 class Game(gaem.Game):
     def on_load(self):
-        self.hello_img = gaem.load_image('examples/hello.png', center=True)
+        self.hello_img = gaem.load_image('assets/hello.png', center=True)
         w, h = gaem.get_screen_size()
         self.x = w / 2
         self.y = h / 2

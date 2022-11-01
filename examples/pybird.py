@@ -18,8 +18,8 @@ SPEED = 100
 
 class PyBird(gaem.Game):
     def on_load(self):
-        self.pipe_img = gaem.load_image('examples/pipe.png')
-        self.bird_img = gaem.load_image('examples/bird.png', center=True)
+        self.pipe_img = gaem.load_image('assets/pipe.png')
+        self.bird_img = gaem.load_image('assets/bird.png', center=True)
         gaem.set_background_color(50, 210, 220)
         self.reset()
 

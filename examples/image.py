@@ -8,7 +8,7 @@ KB_ACCEL = 500
 
 class Game(gaem.Game):
     def on_load(self):
-        self.hello_img = gaem.load_image('examples/hello.png')
+        self.hello_img = gaem.load_image('assets/hello.png')
         self.x = 20
         self.y = 15
         self.reset_speed()
@@ -28,7 +28,7 @@ class Game(gaem.Game):
             self.dx += KB_ACCEL * dt
         if gaem.is_key_pressed('up'):
             self.dy -= KB_ACCEL * dt
-        if gaem.is_key_pressed('down'):
+        if gaem.is_key_pressed('down'R:
             self.dy += KB_ACCEL * dt
         self.x += self.dx * dt
         self.y += self.dy * dt

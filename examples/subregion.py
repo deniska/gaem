@@ -7,7 +7,7 @@ class SubregionExample(gaem.Game):
     def on_load(self):
         gaem.set_background_color(255, 244, 165)
         w, h = gaem.get_screen_size()
-        img = gaem.load_image('examples/regions.png')
+        img = gaem.load_image('assets/regions.png')
         self.imgs = [
             img.subregion(0, 0, 64, 64),
             img.subregion(64, 0, 64, 64),

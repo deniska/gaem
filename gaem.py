@@ -195,9 +195,11 @@ class Image:
         flip_flags = 0
         if sx < 0:
             sx = -sx
+            cx = self.width - cx
             flip_flags |= SDL_FLIP_HORIZONTAL
         elif sy < 0:
             sy = -sy
+            cy = self.height - cy
             flip_flags |= SDL_FLIP_VERTICAL
         dstrect = self._dstrect
         center = self._center

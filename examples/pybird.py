@@ -42,7 +42,6 @@ class PyBird(gaem.Game):
             self.pipe_img.draw(
                 x=(self.pipe_img.width + PIPE_HDIST) * i - self.x,
                 y=pipe_y - PIPE_VDIST / 2,
-                cy=self.pipe_img.height,
                 sy=-1.0,
             )
         # bird

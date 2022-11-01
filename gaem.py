@@ -154,6 +154,11 @@ class Image:
         self.texture = texture
         self.width = width
         self.height = height
+        self._srcrect = _mysdl2.ffi.new('SDL_Rect *')
+        self._srcrect.x = 0
+        self._srcrect.y = 0
+        self._srcrect.w = width
+        self._srcrect.h = height
         self._dstrect = _mysdl2.ffi.new('SDL_FRect *')
         self._center = _mysdl2.ffi.new('SDL_FPoint *')
         self.x = 0.0
@@ -214,7 +219,7 @@ class Image:
         _mysdl2.lib.SDL_RenderCopyExF(
             renderer,
             self.texture.t,
-            NULL,
+            self._srcrect,
             dstrect,
             -angle / math.tau * 360.0,
             center,
@@ -224,6 +229,14 @@ class Image:
     def center(self):
         self.cx = self.width / 2
         self.cy = self.height / 2
+
+    def subregion(self, x, y, w, h):
+        img = Image(self.texture, w, h)
+        img._srcrect.x = self._srcrect.x + x
+        img._srcrect.y = self._srcrect.y + y
+        img._srcrect.w = w
+        img._srcrect.h = h
+        return img
 
 
 class SDL2Texture:

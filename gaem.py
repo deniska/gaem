@@ -156,11 +156,45 @@ class Image:
         self.height = height
         self._dstrect = _mysdl2.ffi.new('SDL_FRect *')
         self._center = _mysdl2.ffi.new('SDL_FPoint *')
+        self.x = 0.0
+        self.y = 0.0
+        self.sx = 1.0
+        self.sy = 1.0
+        self.cx = 0.0
+        self.cy = 0.0
+        self.angle = 0.0
 
     def __del__(self):
         _mysdl2.lib.SDL_DestroyTexture(self.texture)
 
-    def render(self, renderer, *, x, y, sx, sy, cx, cy, angle):
+    def draw(
+        self,
+        *,
+        x=None,
+        y=None,
+        sx=None,
+        sy=None,
+        cx=None,
+        cy=None,
+        angle=None,
+        renderer=None
+    ):
+        if x is None:
+            x = self.x
+        if y is None:
+            y = self.y
+        if sx is None:
+            sx = self.sx
+        if sy is None:
+            sy = self.sy
+        if cx is None:
+            cx = self.cx
+        if cy is None:
+            cy = self.cy
+        if angle is None:
+            angle = self.angle
+        if renderer is None:
+            renderer = g.ren
         flip_flags = 0
         if sx < 0:
             sx = -sx
@@ -187,6 +221,10 @@ class Image:
             center,
             flip_flags,
         )
+
+    def center(self):
+        self.cx = self.width / 2
+        self.cy = self.height / 2
 
 
 @dataclass
@@ -250,18 +288,16 @@ class MouseButtonEvent:
         )
 
 
-def load_image(path):
+def load_image(path, *, center=False):
     surf = _mysdl2.lib.IMG_Load(to_cstr(path))
     raise_for_null(surf)
     texture = _mysdl2.lib.SDL_CreateTextureFromSurface(g.ren, surf)
     raise_for_null(texture)
     img = Image(texture, surf.w, surf.h)
     _mysdl2.lib.SDL_FreeSurface(surf)
+    if center:
+        img.center()
     return img
-
-
-def draw(drawable, *, x=0, y=0, sx=1.0, sy=1.0, cx=0.0, cy=0.0, angle=0.0):
-    drawable.render(g.ren, x=x, y=y, sx=sx, sy=sy, cx=cx, cy=cy, angle=angle)
 
 
 def get_screen_size():

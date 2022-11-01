@@ -5,7 +5,7 @@ import gaem
 
 class Game(gaem.Game):
     def on_load(self):
-        self.hello_img = gaem.load_image('examples/hello.png')
+        self.hello_img = gaem.load_image('examples/hello.png', center=True)
         w, h = gaem.get_screen_size()
         self.x = w / 2
         self.y = h / 2
@@ -13,12 +13,9 @@ class Game(gaem.Game):
         self.scale = 1.0
 
     def on_draw(self):
-        gaem.draw(
-            self.hello_img,
+        self.hello_img.draw(
             x=self.x,
             y=self.y,
-            cx=self.hello_img.width / 2,
-            cy=self.hello_img.height / 2,
             sx=self.scale,
             sy=self.scale,
             angle=self.angle,

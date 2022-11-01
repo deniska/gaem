@@ -19,7 +19,7 @@ SPEED = 100
 class PyBird(gaem.Game):
     def on_load(self):
         self.pipe_img = gaem.load_image('examples/pipe.png')
-        self.bird_img = gaem.load_image('examples/bird.png')
+        self.bird_img = gaem.load_image('examples/bird.png', center=True)
         gaem.set_background_color(50, 210, 220)
         self.reset()
 
@@ -35,13 +35,11 @@ class PyBird(gaem.Game):
     def on_draw(self):
         # pipes
         for i, pipe_y in enumerate(self.pipes):
-            gaem.draw(
-                self.pipe_img,
+            self.pipe_img.draw(
                 x=(self.pipe_img.width + PIPE_HDIST) * i - self.x,
                 y=pipe_y + PIPE_VDIST / 2,
             )
-            gaem.draw(
-                self.pipe_img,
+            self.pipe_img.draw(
                 x=(self.pipe_img.width + PIPE_HDIST) * i - self.x,
                 y=pipe_y - PIPE_VDIST / 2,
                 cy=self.pipe_img.height,
@@ -52,12 +50,9 @@ class PyBird(gaem.Game):
         angle = max(angle, -0.8)
         if self.dead:
             angle = -1.5
-        gaem.draw(
-            self.bird_img,
+        self.bird_img.draw(
             x=BIRD_X,
             y=self.y,
-            cx=self.bird_img.width / 2,
-            cy=self.bird_img.height / 2,
             angle=angle,
         )
 

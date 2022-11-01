@@ -18,7 +18,7 @@ class Game(gaem.Game):
         self.dy = random.uniform(-MAX_SPEED, MAX_SPEED)
 
     def on_draw(self):
-        gaem.draw(self.hello_img, x=self.x, y=self.y)
+        self.hello_img.draw(x=self.x, y=self.y)
 
     def on_update(self, dt):
         w, h = gaem.get_screen_size()

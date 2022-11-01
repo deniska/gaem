@@ -17,7 +17,13 @@ class SubregionExample(gaem.Game):
         for i, img in enumerate(self.imgs, start=1):
             img.center()
             img.x = w / 5 * i
-            img.y = h / 2
+            img.y = h / 3
+        the_second_row = []
+        for img in self.imgs:
+            new_img = img.copy()
+            new_img.y = h / 3 * 2
+            the_second_row.append(new_img)
+        self.imgs.extend(the_second_row)
 
     def on_draw(self):
         for img in self.imgs:

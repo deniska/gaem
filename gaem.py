@@ -238,6 +238,21 @@ class Image:
         img._srcrect.h = h
         return img
 
+    def copy(self):
+        img = Image(self.texture, self.width, self.height)
+        img._srcrect.x = self._srcrect.x
+        img._srcrect.y = self._srcrect.y
+        img._srcrect.w = self._srcrect.w
+        img._srcrect.h = self._srcrect.h
+        img.x = self.x
+        img.y = self.y
+        img.sx = self.sx
+        img.sy = self.sy
+        img.cx = self.cx
+        img.cy = self.cy
+        img.angle = self.angle
+        return img
+
 
 class SDL2Texture:
     "Holder object which owns SDL texture"

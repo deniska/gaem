@@ -156,6 +156,8 @@ def run(
                         width=sdl_window_event.data1,
                         height=sdl_window_event.data2,
                     )
+                    g.screen_width = event.width
+                    g.screen_height = event.height
                     game.on_resize(event)
         _mysdl2.lib.SDL_SetRenderDrawColor(g.ren, *g.background_color)
         _mysdl2.lib.SDL_RenderClear(g.ren)

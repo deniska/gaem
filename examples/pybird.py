@@ -49,11 +49,7 @@ class PyBird(gaem.Game):
         angle = max(angle, -0.8)
         if self.dead:
             angle = -1.5
-        self.bird_img.draw(
-            x=BIRD_X,
-            y=self.y,
-            angle=angle,
-        )
+        self.bird_img.draw(x=BIRD_X, y=self.y, angle=angle)
 
     def on_update(self, dt):
         if not self.started:

@@ -8,6 +8,8 @@ NULL = _mysdl2.ffi.NULL
 SDL_WINDOWPOS_CENTERED = 0x2FFF0000
 SDL_WINDOWPOS_UNDEFINED = 0x1FFF0000
 
+SDL_WINDOW_RESIZABLE = 0x00000020
+
 SDL_RENDERER_SOFTWARE = 0x00000001
 SDL_RENDERER_ACCELERATED = 0x00000002
 SDL_RENDERER_PRESENTVSYNC = 0x00000004
@@ -31,6 +33,10 @@ SDL_MOUSEBUTTONDOWN = 0x401
 SDL_MOUSEBUTTONUP = 0x402
 SDL_MOUSEWHEEL = 0x403
 
+SDL_WINDOWEVENT = 0x200
+
+SDL_WINDOWEVENT_SIZE_CHANGED = 6
+
 SDL_FLIP_HORIZONTAL = 0x00000001
 SDL_FLIP_VERTICAL = 0x00000002
 
@@ -51,7 +57,15 @@ class g:  # yes, globals, wanna fight?
 
 
 def run(
-    game, *, title='Gaem', width=800, height=480, x=None, y=None, vsync=False
+    game,
+    *,
+    title='Gaem',
+    width=800,
+    height=480,
+    x=None,
+    y=None,
+    vsync=False,
+    resizable=False
 ):
     ret = _mysdl2.lib.SDL_Init(SDL_INIT_EVERYTHING)
     raise_for_neg(ret)
@@ -66,6 +80,8 @@ def run(
         y = SDL_WINDOWPOS_CENTERED
     title = to_cstr(title)
     flags = 0
+    if resizable:
+        flags |= SDL_WINDOW_RESIZABLE
     g.screen_width = width
     g.screen_height = height
     g.win = _mysdl2.lib.SDL_CreateWindow(title, x, y, width, height, flags)
@@ -131,6 +147,16 @@ def run(
                 g.mouse_y = event.y
                 g.pressed_mouse_buttons.discard(event.button)
                 game.on_mouseup(event)
+            elif ev_type == SDL_WINDOWEVENT:
+                sdl_window_event = _mysdl2.ffi.cast(
+                    'struct SDL_WindowEvent *', sdl2_event
+                )
+                if sdl_window_event.event == SDL_WINDOWEVENT_SIZE_CHANGED:
+                    event = ResizeEvent(
+                        width=sdl_window_event.data1,
+                        height=sdl_window_event.data2,
+                    )
+                    game.on_resize(event)
         _mysdl2.lib.SDL_SetRenderDrawColor(g.ren, *g.background_color)
         _mysdl2.lib.SDL_RenderClear(g.ren)
         if previous_ticks:
@@ -325,6 +351,12 @@ class MouseButtonEvent:
         )
 
 
+@dataclass
+class ResizeEvent:
+    width: int
+    height: int
+
+
 def load_image(path, *, center=False):
     surf = _mysdl2.lib.IMG_Load(to_cstr(path))
     raise_for_null(surf)
@@ -412,6 +444,9 @@ class Game:
 
     def on_quit(self):
         return True
+
+    def on_resize(self, event):
+        pass
 
 
 scancodes = {

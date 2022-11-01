@@ -134,6 +134,20 @@ typedef struct SDL_MouseButtonEvent
     Sint32 y;
 } SDL_MouseButtonEvent;
 
+
+typedef struct SDL_WindowEvent
+{
+    Uint32 type;
+    Uint32 timestamp;
+    Uint32 windowID;
+    Uint8 event;
+    Uint8 padding1;
+    Uint8 padding2;
+    Uint8 padding3;
+    Sint32 data1;
+    Sint32 data2;
+} SDL_WindowEvent;
+
 SDL_Renderer * SDL_CreateRenderer(SDL_Window * window,
                        int index, uint32_t flags);
 void SDL_DestroyRenderer(SDL_Renderer * renderer);

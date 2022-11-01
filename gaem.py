@@ -164,9 +164,6 @@ class Image:
         self.cy = 0.0
         self.angle = 0.0
 
-    def __del__(self):
-        _mysdl2.lib.SDL_DestroyTexture(self.texture)
-
     def draw(
         self,
         *,
@@ -214,7 +211,7 @@ class Image:
         center.y = offset_y
         _mysdl2.lib.SDL_RenderCopyExF(
             renderer,
-            self.texture,
+            self.texture.t,
             NULL,
             dstrect,
             -angle / math.tau * 360.0,
@@ -225,6 +222,16 @@ class Image:
     def center(self):
         self.cx = self.width / 2
         self.cy = self.height / 2
+
+
+class SDL2Texture:
+    "Holder object which owns SDL texture"
+
+    def __init__(self, texture):
+        self.t = texture
+
+    def __del__(self):
+        _mysdl2.lib.SDL_DestroyTexture(self.t)
 
 
 @dataclass
@@ -293,7 +300,7 @@ def load_image(path, *, center=False):
     raise_for_null(surf)
     texture = _mysdl2.lib.SDL_CreateTextureFromSurface(g.ren, surf)
     raise_for_null(texture)
-    img = Image(texture, surf.w, surf.h)
+    img = Image(SDL2Texture(texture), surf.w, surf.h)
     _mysdl2.lib.SDL_FreeSurface(surf)
     if center:
         img.center()

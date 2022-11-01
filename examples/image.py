@@ -28,7 +28,7 @@ class Game(gaem.Game):
             self.dx += KB_ACCEL * dt
         if gaem.is_key_pressed('up'):
             self.dy -= KB_ACCEL * dt
-        if gaem.is_key_pressed('down'R:
+        if gaem.is_key_pressed('down'):
             self.dy += KB_ACCEL * dt
         self.x += self.dx * dt
         self.y += self.dy * dt

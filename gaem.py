@@ -1,4 +1,5 @@
 import math
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 
 import _mysdl2
@@ -369,6 +370,23 @@ def load_image(path, *, center=False):
     if center:
         img.center()
     return img
+
+
+def load_atlas(path):
+    # assumes a single png image with the same name as the xml
+    atlas = {}
+    data = ET.parse(path)
+    sheet = load_image(path.rpartition('.xml')[0] + '.png')
+    for el in data.findall('./SubTexture'):
+        name = el.attrib['name'].removesuffix('.png')
+        img = sheet.subregion(
+            int(el.attrib['x']),
+            int(el.attrib['y']),
+            int(el.attrib['width']),
+            int(el.attrib['height']),
+        )
+        atlas[name] = img
+    return atlas
 
 
 def get_screen_size():

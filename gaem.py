@@ -316,17 +316,18 @@ class Sound:
         _mysdl2.lib.Mix_VolumeChunk(self.chunk, int(val * SDL_MIX_MAXVOLUME))
 
     def looper(self):
-        return SoundLooper(self)
+        return SoundPlayer(self, looping=True)
 
 
-class SoundLooper:
-    def __init__(self, sound):
+class SoundPlayer:
+    def __init__(self, sound, *, looping):
         self.sound = sound
         self.channel = None
+        self.looping = looping
 
     def play(self):
         if self.channel is None:
-            self.channel = self.sound.play(looping=True)
+            self.channel = self.sound.play(looping=self.looping)
         else:
             self.channel.play()
         return self.channel

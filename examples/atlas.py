@@ -12,9 +12,8 @@ class AtlasExample(gaem.Game):
         gaem.set_background_color(237, 228, 162)
         self.atlas = gaem.load_atlas('assets/sheet_tanks.xml')
         self.pew_sound = gaem.load_sound('assets/tank_shoot.wav')
-        self.move_sound = gaem.load_sound('assets/tank_move.wav')
+        self.move_sound = gaem.load_sound('assets/tank_move.wav').looper()
         self.move_sound.volume = 0.8
-        self.move_sound_channel = None
         w, h = gaem.get_screen_size()
         self.tank_x = w / 2
         self.tank_y = h / 2
@@ -65,11 +64,10 @@ class AtlasExample(gaem.Game):
         self.bullets = [
             b for b in self.bullets if abs(b.x) < 10000 and abs(b.y) < 10000
         ]
-        if moving and self.move_sound_channel is None:
-            self.move_sound_channel = self.move_sound.play(looping=True)
-        elif not moving and self.move_sound_channel is not None:
-            self.move_sound_channel.stop()
-            self.move_sound_channel = None
+        if moving:
+            self.move_sound.play()
+        else:
+            self.move_sound.pause()
 
     def on_mousedown(self, event):
         bullet = self.atlas[f'bullet{self.tank_color}_outline'].copy()

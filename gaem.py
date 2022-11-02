@@ -315,6 +315,39 @@ class Sound:
     def volume(self, val):
         _mysdl2.lib.Mix_VolumeChunk(self.chunk, int(val * SDL_MIX_MAXVOLUME))
 
+    def looper(self):
+        return SoundLooper(self)
+
+
+class SoundLooper:
+    def __init__(self, sound):
+        self.sound = sound
+        self.channel = None
+
+    def play(self):
+        if self.channel is None:
+            self.channel = self.sound.play(looping=True)
+        else:
+            self.channel.play()
+        return self.channel
+
+    def stop(self):
+        if self.channel is not None:
+            self.channel.stop()
+            self.channel = None
+
+    def pause(self):
+        if self.channel is not None:
+            self.channel.pause()
+
+    @property
+    def volume(self):
+        return self.sound.volume  # should probably own the channel volume?
+
+    @volume.setter
+    def volume(self, val):
+        self.sound.volume = val
+
 
 class Channel:
     channels = {}
@@ -333,6 +366,12 @@ class Channel:
     def stop(self):
         ret = _mysdl2.lib.Mix_HaltChannel(self.channel_id)
         raise_for_neg(ret)
+
+    def pause(self):
+        _mysdl2.lib.Mix_Pause(self.channel_id)
+
+    def play(self):
+        _mysdl2.lib.Mix_Resume(self.channel_id)
 
 
 class SDL2Texture:

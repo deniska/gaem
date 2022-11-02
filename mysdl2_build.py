@@ -189,6 +189,8 @@ int Mix_OpenAudio(int frequency, Uint16 format, int channels, int chunksize);
 void Mix_CloseAudio(void);
 Mix_Chunk * Mix_LoadWAV(const char *file);
 int Mix_PlayChannel(int channel, Mix_Chunk *chunk, int loops);
+void Mix_Resume(int channel);
+void Mix_Pause(int channel);
 int Mix_HaltChannel(int channel);
 int Mix_VolumeChunk(Mix_Chunk *chunk, int volume);
 void Mix_FreeChunk(Mix_Chunk *chunk);

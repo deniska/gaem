@@ -11,6 +11,10 @@ class AtlasExample(gaem.Game):
     def on_load(self):
         gaem.set_background_color(237, 228, 162)
         self.atlas = gaem.load_atlas('assets/sheet_tanks.xml')
+        self.pew_sound = gaem.load_sound('assets/tank_shoot.wav')
+        self.move_sound = gaem.load_sound('assets/tank_move.wav')
+        self.move_sound.volume = 0.8
+        self.move_sound_channel = None
         w, h = gaem.get_screen_size()
         self.tank_x = w / 2
         self.tank_y = h / 2
@@ -38,16 +42,21 @@ class AtlasExample(gaem.Game):
             bullet.draw(angle=bullet.angle - math.tau / 4)
 
     def on_update(self, dt):
+        moving = False
         if gaem.is_key_pressed('w'):
             self.tank_x += dt * TANK_SPEED * math.cos(self.tank_angle)
             self.tank_y -= dt * TANK_SPEED * math.sin(self.tank_angle)
+            moving = True
         if gaem.is_key_pressed('s'):
             self.tank_x -= dt * TANK_SPEED * math.cos(self.tank_angle)
             self.tank_y += dt * TANK_SPEED * math.sin(self.tank_angle)
+            moving = True
         if gaem.is_key_pressed('a'):
             self.tank_angle += dt * TANK_ROTATION_SPEED
+            moving = True
         if gaem.is_key_pressed('d'):
             self.tank_angle -= dt * TANK_ROTATION_SPEED
+            moving = True
         x, y = gaem.get_mouse_position()
         self.barrel_angle = math.atan2(self.tank_y - y, x - self.tank_x)
         for bullet in self.bullets:
@@ -56,6 +65,11 @@ class AtlasExample(gaem.Game):
         self.bullets = [
             b for b in self.bullets if abs(b.x) < 10000 and abs(b.y) < 10000
         ]
+        if moving and self.move_sound_channel is None:
+            self.move_sound_channel = self.move_sound.play(looping=True)
+        elif not moving and self.move_sound_channel is not None:
+            self.move_sound_channel.stop()
+            self.move_sound_channel = None
 
     def on_mousedown(self, event):
         bullet = self.atlas[f'bullet{self.tank_color}_outline'].copy()
@@ -64,6 +78,7 @@ class AtlasExample(gaem.Game):
         bullet.x = self.tank_x
         bullet.y = self.tank_y
         self.bullets.append(bullet)
+        self.pew_sound.play()
 
     def on_keydown(self, event):
         if event.scancode == 'escape':

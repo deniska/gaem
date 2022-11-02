@@ -43,6 +43,9 @@ SDL_FLIP_VERTICAL = 0x00000002
 
 SDLK_SCANCODE_MASK = 1 << 30
 
+AUDIO_S16LSB = 0x8010
+SDL_MIX_MAXVOLUME = 128
+
 
 class g:  # yes, globals, wanna fight?
     win = None
@@ -74,6 +77,9 @@ def run(
     img_flags = IMG_INIT_PNG | IMG_INIT_JPG
     if img_flags != _mysdl2.lib.IMG_Init(img_flags):
         raise GaemError('Failed to initialize SDL_Image')
+
+    ret = _mysdl2.lib.Mix_OpenAudio(44100, AUDIO_S16LSB, 2, 512)
+    raise_for_neg(ret)
 
     if x is None:
         x = SDL_WINDOWPOS_CENTERED
@@ -174,6 +180,7 @@ def run(
 
     _mysdl2.lib.SDL_DestroyRenderer(g.ren)
     _mysdl2.lib.SDL_DestroyWindow(g.win)
+    _mysdl2.lib.Mix_CloseAudio()
     _mysdl2.lib.IMG_Quit()
     _mysdl2.lib.SDL_Quit()
 
@@ -247,7 +254,7 @@ class Image:
         center.y = offset_y
         _mysdl2.lib.SDL_RenderCopyExF(
             renderer,
-            self.texture.t,
+            self.texture.ptr,
             self._srcrect,
             dstrect,
             -angle / math.tau * 360.0,
@@ -283,14 +290,59 @@ class Image:
         return img
 
 
+class Sound:
+    def __init__(self, chunk):
+        self.chunk = chunk
+
+    def play(self, *, channel_id=-1, looping=False):
+        if looping:
+            loops = -1
+        else:
+            loops = 0
+        ret = _mysdl2.lib.Mix_PlayChannel(channel_id, self.chunk, loops)
+        if ret == -1:
+            return None
+        return Channel.get_or_create(ret)
+
+    def __del__(self):
+        _mysdl2.lib.Mix_FreeChunk(self.chunk)
+
+    @property
+    def volume(self):
+        return _mysdl2.lib.Mix_VolumeChunk(self.chunk, -1) / SDL_MIX_MAXVOLUME
+
+    @volume.setter
+    def volume(self, val):
+        _mysdl2.lib.Mix_VolumeChunk(self.chunk, int(val * SDL_MIX_MAXVOLUME))
+
+
+class Channel:
+    channels = {}
+
+    def __init__(self, channel_id):
+        self.channel_id = channel_id
+
+    @classmethod
+    def get_or_create(cls, channel_id):
+        channel = cls.channels.get(channel_id)
+        if channel is None:
+            channel = cls(channel_id)
+            cls.channels[channel_id] = channel
+        return channel
+
+    def stop(self):
+        ret = _mysdl2.lib.Mix_HaltChannel(self.channel_id)
+        raise_for_neg(ret)
+
+
 class SDL2Texture:
     "Holder object which owns SDL texture"
 
     def __init__(self, texture):
-        self.t = texture
+        self.ptr = texture
 
     def __del__(self):
-        _mysdl2.lib.SDL_DestroyTexture(self.t)
+        _mysdl2.lib.SDL_DestroyTexture(self.ptr)
 
 
 @dataclass
@@ -387,6 +439,12 @@ def load_atlas(path):
         )
         atlas[name] = img
     return atlas
+
+
+def load_sound(path):
+    chunk = _mysdl2.lib.Mix_LoadWAV(to_cstr(path))
+    raise_for_null(chunk)
+    return Sound(chunk)
 
 
 def get_screen_size():

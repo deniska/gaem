@@ -184,6 +184,15 @@ int IMG_Init(int flags);
 void IMG_Quit(void);
 SDL_Surface * IMG_Load(const char *file);
 
+typedef struct Mix_Chunk Mix_Chunk;
+int Mix_OpenAudio(int frequency, Uint16 format, int channels, int chunksize);
+void Mix_CloseAudio(void);
+Mix_Chunk * Mix_LoadWAV(const char *file);
+int Mix_PlayChannel(int channel, Mix_Chunk *chunk, int loops);
+int Mix_HaltChannel(int channel);
+int Mix_VolumeChunk(Mix_Chunk *chunk, int volume);
+void Mix_FreeChunk(Mix_Chunk *chunk);
+
 int my_poll_event(void);
 SDL_Event * get_my_event_ptr(void);
 uint32_t my_get_event_type(void);
@@ -196,6 +205,7 @@ ffibuilder.set_source(
     """
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_mixer.h>
 
 SDL_Event my_event;
 
@@ -212,7 +222,7 @@ SDL_Event * get_my_event_ptr(void) {
 }
 """,
     extra_compile_args=[*sdl2_cflags],
-    extra_link_args=[*sdl2_libs, '-lSDL2_image'],
+    extra_link_args=[*sdl2_libs, '-lSDL2_image', '-lSDL2_mixer'],
 )
 
 if __name__ == '__main__':

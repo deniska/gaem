@@ -294,7 +294,7 @@ class Sound:
     def __init__(self, chunk):
         self.chunk = chunk
 
-    def play(self, *, channel_id=-1, looping=False):
+    def play(self, *, channel_id=-1, looping=False, volume=1.0):
         if looping:
             loops = -1
         else:
@@ -302,7 +302,9 @@ class Sound:
         ret = _mysdl2.lib.Mix_PlayChannel(channel_id, self.chunk, loops)
         if ret == -1:
             return None
-        return Channel.get_or_create(ret)
+        channel = Channel.get_or_create(ret)
+        channel.set_volume(volume)
+        return channel
 
     def __del__(self):
         _mysdl2.lib.Mix_FreeChunk(self.chunk)
@@ -324,10 +326,13 @@ class SoundPlayer:
         self.sound = sound
         self.channel = None
         self.looping = looping
+        self._volume = 1.0
 
     def play(self):
         if self.channel is None:
-            self.channel = self.sound.play(looping=self.looping)
+            self.channel = self.sound.play(
+                looping=self.looping, volume=self._volume
+            )
         else:
             self.channel.play()
         return self.channel
@@ -343,11 +348,13 @@ class SoundPlayer:
 
     @property
     def volume(self):
-        return self.sound.volume  # should probably own the channel volume?
+        return self._volume
 
     @volume.setter
     def volume(self, val):
-        self.sound.volume = val
+        if self.channel is not None:
+            self.channel.set_volume(val)
+        self._volume = val
 
 
 class Channel:
@@ -373,6 +380,18 @@ class Channel:
 
     def play(self):
         _mysdl2.lib.Mix_Resume(self.channel_id)
+
+    def set_volume(self, volume):
+        _mysdl2.lib.Mix_Volume(
+            self.channel_id, int(volume * SDL_MIX_MAXVOLUME)
+        )
+
+    def set_position(self, angle, distance):
+        _mysdl2.lib.Mix_SetPosition(
+            self.channel_id,
+            int(angle / math.tau * 360.0 - 90.0),
+            int(distance * 255),
+        )
 
 
 class SDL2Texture:

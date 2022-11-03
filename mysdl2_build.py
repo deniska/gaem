@@ -19,6 +19,7 @@ typedef uint32_t Uint32;
 typedef uint16_t Uint16;
 typedef uint8_t Uint8;
 typedef int32_t Sint32;
+typedef int16_t Sint16;
 typedef Sint32 SDL_Keycode;
 
 typedef struct SDL_version
@@ -194,6 +195,8 @@ void Mix_Pause(int channel);
 int Mix_HaltChannel(int channel);
 int Mix_VolumeChunk(Mix_Chunk *chunk, int volume);
 void Mix_FreeChunk(Mix_Chunk *chunk);
+int Mix_Volume(int channel, int volume);
+int Mix_SetPosition(int channel, Sint16 angle, Uint8 distance);
 
 int my_poll_event(void);
 SDL_Event * get_my_event_ptr(void);

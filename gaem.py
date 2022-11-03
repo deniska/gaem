@@ -294,7 +294,15 @@ class Sound:
     def __init__(self, chunk):
         self.chunk = chunk
 
-    def play(self, *, channel_id=-1, looping=False, volume=1.0):
+    def play(
+        self,
+        *,
+        channel_id=-1,
+        looping=False,
+        volume=1.0,
+        angle=math.tau / 4,
+        distance=0.0
+    ):
         if looping:
             loops = -1
         else:
@@ -304,6 +312,7 @@ class Sound:
             return None
         channel = Channel.get_or_create(ret)
         channel.set_volume(volume)
+        channel.set_position(angle, distance)
         return channel
 
     def __del__(self):
@@ -327,6 +336,8 @@ class SoundPlayer:
         self.channel = None
         self.looping = looping
         self._volume = 1.0
+        self._angle = math.tau / 4
+        self._distance = 0.0
 
     def play(self):
         if self.channel is None:
@@ -352,9 +363,29 @@ class SoundPlayer:
 
     @volume.setter
     def volume(self, val):
-        if self.channel is not None:
-            self.channel.set_volume(val)
         self._volume = val
+        if self.channel is not None:
+            self.channel.set_volume(self._volume)
+
+    @property
+    def angle(self):
+        return self._angle
+
+    @angle.setter
+    def angle(self, val):
+        self._angle = val
+        if self.channel is not None:
+            self.channel.set_position(self._angle, self._distance)
+
+    @property
+    def distance(self):
+        return self._distance
+
+    @distance.setter
+    def distance(self, val):
+        self._distance = val
+        if self.channel is not None:
+            self.channel.set_position(self._angle, self._distance)
 
 
 class Channel:
@@ -387,6 +418,7 @@ class Channel:
         )
 
     def set_position(self, angle, distance):
+        distance = min(max(distance, 0.0), 1.0)
         _mysdl2.lib.Mix_SetPosition(
             self.channel_id,
             int(angle / math.tau * 360.0 - 90.0),
@@ -561,7 +593,7 @@ class Game:
     def on_update(self, dt):
         pass
 
-    def on_render(self):
+    def on_draw(self):
         pass
 
     def on_keydown(self, event):

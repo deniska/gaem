@@ -197,11 +197,14 @@ int Mix_VolumeChunk(Mix_Chunk *chunk, int volume);
 void Mix_FreeChunk(Mix_Chunk *chunk);
 int Mix_Volume(int channel, int volume);
 int Mix_SetPosition(int channel, Sint16 angle, Uint8 distance);
+void Mix_ChannelFinished(void (*channel_finished)(int channel));
 
 int my_poll_event(void);
 SDL_Event * get_my_event_ptr(void);
 uint32_t my_get_event_type(void);
 static const SDL_Event my_event;
+
+extern "Python" void channel_finished_callback(int channel);
 """
 )
 

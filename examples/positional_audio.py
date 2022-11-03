@@ -13,7 +13,14 @@ class PositionalAudio(gaem.Game):
         dy = event.y - h / 2
         d = math.sqrt(dx**2 + dy**2) / (w / 2)
         a = math.atan2(dy, -dx)
-        self.pew_sound.play(angle=a, distance=d)
+        if event.button == 1:
+            self.pew_sound.play(angle=a, distance=d)
+        else:
+            player = self.pew_sound.player()
+            player.angle = a
+            player.distance = d
+            player.set_finish_callback(lambda: print('Player finished'))
+            player.play()
 
     def on_keydown(self, event):
         if event.scancode == 'escape':

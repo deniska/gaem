@@ -80,6 +80,7 @@ def run(
 
     ret = _mysdl2.lib.Mix_OpenAudio(44100, AUDIO_S16LSB, 2, 512)
     raise_for_neg(ret)
+    _mysdl2.lib.Mix_ChannelFinished(_mysdl2.lib.channel_finished_callback)
 
     if x is None:
         x = SDL_WINDOWPOS_CENTERED
@@ -329,6 +330,9 @@ class Sound:
     def looper(self):
         return SoundPlayer(self, looping=True)
 
+    def player(self):
+        return SoundPlayer(self, looping=False)
+
 
 class SoundPlayer:
     def __init__(self, sound, *, looping):
@@ -338,18 +342,25 @@ class SoundPlayer:
         self._volume = 1.0
         self._angle = math.tau / 4
         self._distance = 0.0
+        self._finish_callback = None
 
     def play(self):
         if self.channel is None:
             self.channel = self.sound.play(
-                looping=self.looping, volume=self._volume
+                looping=self.looping,
+                volume=self._volume,
+                angle=self._angle,
+                distance=self._distance,
             )
+            if self.channel is not None:
+                self.channel.set_finish_callback(self._on_finished)
         else:
             self.channel.play()
         return self.channel
 
     def stop(self):
         if self.channel is not None:
+            self.channel.set_finish_callback(None)
             self.channel.stop()
             self.channel = None
 
@@ -387,12 +398,23 @@ class SoundPlayer:
         if self.channel is not None:
             self.channel.set_position(self._angle, self._distance)
 
+    def _on_finished(self):
+        if self.channel is not None:
+            self.channel.set_finish_callback(None)
+            self.channel = None
+            if self._finish_callback is not None:
+                self._finish_callback()
+
+    def set_finish_callback(self, finish_callback):
+        self._finish_callback = finish_callback
+
 
 class Channel:
     channels = {}
 
     def __init__(self, channel_id):
         self.channel_id = channel_id
+        self._finish_callback = None
 
     @classmethod
     def get_or_create(cls, channel_id):
@@ -424,6 +446,18 @@ class Channel:
             int(angle / math.tau * 360.0 - 90.0),
             int(distance * 255),
         )
+
+    def _on_finished(self):
+        if self._finish_callback is not None:
+            self._finish_callback()
+
+    def set_finish_callback(self, finish_callback):
+        self._finish_callback = finish_callback
+
+
+@_mysdl2.ffi.def_extern()
+def channel_finished_callback(channel_id):
+    Channel.get_or_create(channel_id)._on_finished()
 
 
 class SDL2Texture:

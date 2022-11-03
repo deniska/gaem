@@ -103,4 +103,5 @@ def next_pipe():
     return random.randint(PIPE_VDIST, HEIGHT - PIPE_VDIST)
 
 
-gaem.run(PyBird(), title='PyBird', width=WIDTH, height=HEIGHT)
+if __name__ == '__main__':
+    gaem.run(PyBird(), title='PyBird', width=WIDTH, height=HEIGHT)

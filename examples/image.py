@@ -55,4 +55,5 @@ class Game(gaem.Game):
             gaem.quit()
 
 
-gaem.run(Game(), title='Logo bounce')
+if __name__ == '__main__':
+    gaem.run(Game(), title='Logo bounce')

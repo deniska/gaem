@@ -43,4 +43,5 @@ class Game(gaem.Game):
             gaem.quit()
 
 
-gaem.run(Game(), title='Mouse example')
+if __name__ == '__main__':
+    gaem.run(Game(), title='Mouse example')

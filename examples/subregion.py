@@ -38,4 +38,5 @@ class SubregionExample(gaem.Game):
             gaem.quit()
 
 
-gaem.run(SubregionExample(), title='Subregion example')
+if __name__ == '__main__':
+    gaem.run(SubregionExample(), title='Subregion example')

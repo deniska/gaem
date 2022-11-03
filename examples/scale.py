@@ -38,4 +38,5 @@ class ScaleExample(gaem.Game):
         self.hello_img.y = event.height / 2
 
 
-gaem.run(ScaleExample(), title='Scale example', resizable=True)
+if __name__ == '__main__':
+    gaem.run(ScaleExample(), title='Scale example', resizable=True)

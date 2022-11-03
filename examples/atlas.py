@@ -92,4 +92,5 @@ class AtlasExample(gaem.Game):
             self.tank_color = color
 
 
-gaem.run(AtlasExample(), title='Atlas example', width=1280, height=720)
+if __name__ == '__main__':
+    gaem.run(AtlasExample(), title='Atlas example', width=1280, height=720)

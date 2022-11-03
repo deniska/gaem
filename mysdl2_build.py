@@ -186,6 +186,7 @@ void IMG_Quit(void);
 SDL_Surface * IMG_Load(const char *file);
 
 typedef struct Mix_Chunk Mix_Chunk;
+typedef struct Mix_Music Mix_Music;
 int Mix_OpenAudio(int frequency, Uint16 format, int channels, int chunksize);
 void Mix_CloseAudio(void);
 Mix_Chunk * Mix_LoadWAV(const char *file);
@@ -198,6 +199,14 @@ void Mix_FreeChunk(Mix_Chunk *chunk);
 int Mix_Volume(int channel, int volume);
 int Mix_SetPosition(int channel, Sint16 angle, Uint8 distance);
 void Mix_ChannelFinished(void (*channel_finished)(int channel));
+int Mix_MasterVolume(int volume);
+int Mix_VolumeMusic(int volume);
+int Mix_HaltMusic(void);
+Mix_Music * Mix_LoadMUS(const char *file);
+int Mix_PlayMusic(Mix_Music *music, int loops);
+void Mix_PauseMusic(void);
+void Mix_ResumeMusic(void);
+void Mix_FreeMusic(Mix_Music *music);
 
 int my_poll_event(void);
 SDL_Event * get_my_event_ptr(void);

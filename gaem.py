@@ -455,6 +455,21 @@ class Channel:
         self._finish_callback = finish_callback
 
 
+class Music:
+    def __init__(self, music):
+        self.music = music
+
+    def __del__(self):
+        _mysdl2.lib.Mix_FreeMusic(self.music)
+
+    def play(self, *, looping=False):
+        if looping:
+            loops = -1
+        else:
+            loops = 0
+        _mysdl2.lib.Mix_PlayMusic(self.music, loops)
+
+
 @_mysdl2.ffi.def_extern()
 def channel_finished_callback(channel_id):
     Channel.get_or_create(channel_id)._on_finished()
@@ -572,6 +587,12 @@ def load_sound(path):
     return Sound(chunk)
 
 
+def load_music(path):
+    music = _mysdl2.lib.Mix_LoadMUS(to_cstr(path))
+    raise_for_null(music)
+    return Music(music)
+
+
 def get_screen_size():
     return (g.screen_width, g.screen_height)
 
@@ -590,6 +611,31 @@ def get_mouse_position():
 
 def set_background_color(red, green, blue, alpha=255):
     g.background_color = (red, green, blue, alpha)
+
+
+def stop_sounds():
+    ret = _mysdl2.lib.Mix_HaltChannel(-1)
+    raise_for_neg(ret)
+
+
+def stop_music():
+    _mysdl2.lib.Mix_HaltMusic()
+
+
+def pause_music():
+    _mysdl2.lib.Mix_PauseMusic()
+
+
+def resume_music():
+    _mysdl2.lib.Mix_ResumeMusic()
+
+
+def set_sounds_volume(self, volume):
+    _mysdl2.lib.Mix_MasterVolume(int(volume * SDL_MIX_MAXVOLUME))
+
+
+def set_music_volume(self, volume):
+    _mysdl2.lib.Mix_VolumeMusic(int(volume * SDL_MIX_MAXVOLUME))
 
 
 def quit():

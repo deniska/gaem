@@ -58,6 +58,7 @@ class g:  # yes, globals, wanna fight?
     mouse_y = 0
     pressed_mouse_buttons = set()
     background_color = (0, 0, 0, 255)
+    music_finished = False
 
 
 def run(
@@ -81,6 +82,7 @@ def run(
     ret = _mysdl2.lib.Mix_OpenAudio(44100, AUDIO_S16LSB, 2, 512)
     raise_for_neg(ret)
     _mysdl2.lib.Mix_ChannelFinished(_mysdl2.lib.channel_finished_callback)
+    _mysdl2.lib.Mix_HookMusicFinished(_mysdl2.lib.music_finished_callback)
 
     if x is None:
         x = SDL_WINDOWPOS_CENTERED
@@ -167,6 +169,12 @@ def run(
                     g.screen_width = event.width
                     g.screen_height = event.height
                     game.on_resize(event)
+            if g.music_finished:
+                g.music_finished = False
+                game.on_music_finished()
+        if g.music_finished:  # again in case we polled no sdl events
+            g.music_finished = False
+            game.on_music_finished()
         _mysdl2.lib.SDL_SetRenderDrawColor(g.ren, *g.background_color)
         _mysdl2.lib.SDL_RenderClear(g.ren)
         if previous_ticks:
@@ -475,6 +483,11 @@ def channel_finished_callback(channel_id):
     Channel.get_or_create(channel_id)._on_finished()
 
 
+@_mysdl2.ffi.def_extern()
+def music_finished_callback():
+    g.music_finished = True
+
+
 class SDL2Texture:
     "Holder object which owns SDL texture"
 
@@ -695,6 +708,9 @@ class Game:
         return True
 
     def on_resize(self, event):
+        pass
+
+    def on_music_finished(self):
         pass
 
 

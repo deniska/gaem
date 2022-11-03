@@ -204,6 +204,7 @@ int Mix_VolumeMusic(int volume);
 int Mix_HaltMusic(void);
 Mix_Music * Mix_LoadMUS(const char *file);
 int Mix_PlayMusic(Mix_Music *music, int loops);
+void Mix_HookMusicFinished(void (*music_finished)(void));
 void Mix_PauseMusic(void);
 void Mix_ResumeMusic(void);
 void Mix_FreeMusic(Mix_Music *music);
@@ -214,6 +215,7 @@ uint32_t my_get_event_type(void);
 static const SDL_Event my_event;
 
 extern "Python" void channel_finished_callback(int channel);
+extern "Python" void music_finished_callback(void);
 """
 )
 

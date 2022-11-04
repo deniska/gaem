@@ -176,6 +176,13 @@ int SDL_RenderCopyExF(SDL_Renderer * renderer,
 int SDL_SetRenderDrawColor(SDL_Renderer * renderer,
                    Uint8 r, Uint8 g, Uint8 b,
                    Uint8 a);
+SDL_Surface* SDL_CreateRGBSurface
+    (Uint32 flags, int width, int height, int depth,
+     Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask);
+int SDL_BlitSurface(SDL_Surface*    src,
+                    const SDL_Rect* srcrect,
+                    SDL_Surface*    dst,
+                    SDL_Rect*       dstrect);
 
 SDL_Texture * SDL_CreateTextureFromSurface(SDL_Renderer * renderer, SDL_Surface * surface);
 void SDL_DestroyTexture(SDL_Texture * texture);
@@ -231,6 +238,8 @@ typedef struct _TTF_Font TTF_Font;
 TTF_Font * TTF_OpenFont(const char *file, int ptsize);
 SDL_Surface * TTF_RenderUTF8_Blended(TTF_Font *font,
                 const char *text, SDL_Color fg);
+SDL_Surface * TTF_RenderGlyph32_Blended(TTF_Font *font,
+                Uint32 ch, SDL_Color fg);
 void TTF_CloseFont(TTF_Font *font);
 """
 )

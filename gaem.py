@@ -507,6 +507,10 @@ class SDL2Texture:
     def __del__(self):
         _mysdl2.lib.SDL_DestroyTexture(self.ptr)
 
+    def replace(self, texture):
+        _mysdl2.lib.SDL_DestroyTexture(self.ptr)
+        self.ptr = texture
+
 
 @dataclass
 class KeyboardEvent:
@@ -607,6 +611,13 @@ def load_atlas(path):
 class Font:
     def __init__(self, font):
         self.font = font
+        self._glyphs = {}
+        self._surface = None
+        self._texture = None
+        self._height = 0
+        self._x = 0
+        self._y = 0
+        self._dstrect = _mysdl2.ffi.new('SDL_Rect *')
 
     def __del__(self):
         _mysdl2.lib.TTF_CloseFont(self.font)
@@ -623,6 +634,68 @@ class Font:
         img = Image(SDL2Texture(texture), surf.w, surf.h)
         _mysdl2.lib.SDL_FreeSurface(surf)
         return img
+
+    def _ensure_glyphs(self, s):
+        if self._surface is None:
+            # first time
+            self._init_new_texture()
+        # simplification, 1 codepoint = 1 glyph
+        glyphs_to_create = set(s) - self._glyphs.keys()
+        for glyph in glyphs_to_create:
+            self._add_glyph(glyph)
+        self._recreate_texture_from_surface()
+
+    def _init_new_texture(self):
+        w = 512  # maybe calculate these?
+        h = 512
+        if self._surface is not None:
+            _mysdl2.lib.SDL_FreeSurface(self._surface)
+        self._surface = _mysdl2.lib.SDL_CreateRGBSurface(
+            0, w, h, 32, 0, 0, 0, 0xFF
+        )
+        raise_for_null(self._surface)
+        t = _mysdl2.lib.SDL_CreateTextureFromSurface(g.ren, self._surface)
+        raise_for_null(t)
+        self._texture = SDL2Texture(t)
+        self._height = 0
+        self._x = 0
+        self._y = 0
+
+    def _add_glyph(self, c):
+        # TODO: I think we'll need padding
+        glyph_surf = _mysdl2.lib.TTF_RenderGlyph32_Blended(
+            self.font, ord(c), (255, 255, 255, 255)
+        )
+        # are we out of horizontal space?
+        if self._x + glyph_surf.w > self._surface.w:
+            # we are, let's start the next line
+            self._x = 0
+            self._y += self._height
+            self._height = 0
+        # are we out of vertical space?
+        if self._y + glyph_surf.h > self._surface.h:
+            # we are, let's start a new image
+            self._recreate_texture_from_surface()
+            self._init_new_texture()
+        dstrect = self._dstrect
+        dstrect.x = self._x
+        dstrect.y = self._y
+        ret = _mysdl2.lib.SDL_BlitSurface(
+            glyph_surf, NULL, self._surface, dstrect
+        )
+        raise_for_neg(ret)
+        glyph_image = Image(self._texture, glyph_surf.w, glyph_surf.h)
+        glyph_image._srcrect.x = self._x
+        glyph_image._srcrect.y = self._y
+        self._x += glyph_surf.w
+        self._height = max(self._height, glyph_surf.h)
+        self._glyphs[c] = glyph_image
+        _mysdl2.lib.SDL_FreeSurface(glyph_surf)
+
+    def _recreate_texture_from_surface(self):
+        t = _mysdl2.lib.SDL_CreateTextureFromSurface(g.ren, self._surface)
+        raise_for_null(t)
+        self._texture.replace(t)
 
 
 def load_sound(path):

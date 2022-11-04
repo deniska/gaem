@@ -84,6 +84,9 @@ def run(
     _mysdl2.lib.Mix_ChannelFinished(_mysdl2.lib.channel_finished_callback)
     _mysdl2.lib.Mix_HookMusicFinished(_mysdl2.lib.music_finished_callback)
 
+    ret = _mysdl2.lib.TTF_Init()
+    raise_for_neg(ret)
+
     if x is None:
         x = SDL_WINDOWPOS_CENTERED
     if y is None:
@@ -187,9 +190,12 @@ def run(
         game.on_draw()
         _mysdl2.lib.SDL_RenderPresent(g.ren)
 
+    del game
+
     _mysdl2.lib.SDL_DestroyRenderer(g.ren)
     _mysdl2.lib.SDL_DestroyWindow(g.win)
     _mysdl2.lib.Mix_CloseAudio()
+    _mysdl2.lib.TTF_Quit()
     _mysdl2.lib.IMG_Quit()
     _mysdl2.lib.SDL_Quit()
 
@@ -274,6 +280,10 @@ class Image:
     def center(self):
         self.cx = self.width / 2
         self.cy = self.height / 2
+
+    def set_position(self, x, y):
+        self.x = x
+        self.y = y
 
     def subregion(self, x, y, w, h):
         img = Image(self.texture, w, h)
@@ -594,6 +604,27 @@ def load_atlas(path):
     return atlas
 
 
+class Font:
+    def __init__(self, font):
+        self.font = font
+
+    def __del__(self):
+        _mysdl2.lib.TTF_CloseFont(self.font)
+
+    def render_text_to_image(self, text, *, color=(255, 255, 255)):
+        if len(color) == 3:
+            color = (color[0], color[1], color[2], 255)
+        surf = _mysdl2.lib.TTF_RenderUTF8_Blended(
+            self.font, to_cstr(text), color
+        )
+        raise_for_null(surf)
+        texture = _mysdl2.lib.SDL_CreateTextureFromSurface(g.ren, surf)
+        raise_for_null(texture)
+        img = Image(SDL2Texture(texture), surf.w, surf.h)
+        _mysdl2.lib.SDL_FreeSurface(surf)
+        return img
+
+
 def load_sound(path):
     chunk = _mysdl2.lib.Mix_LoadWAV(to_cstr(path))
     raise_for_null(chunk)
@@ -604,6 +635,12 @@ def load_music(path):
     music = _mysdl2.lib.Mix_LoadMUS(to_cstr(path))
     raise_for_null(music)
     return Music(music)
+
+
+def load_font(path, ptsize=14):
+    font = _mysdl2.lib.TTF_OpenFont(to_cstr(path), ptsize)
+    raise_for_null(font)
+    return Font(font)
 
 
 def get_screen_size():

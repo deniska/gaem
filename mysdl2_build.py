@@ -149,6 +149,14 @@ typedef struct SDL_WindowEvent
     Sint32 data2;
 } SDL_WindowEvent;
 
+typedef struct SDL_Color
+{
+    Uint8 r;
+    Uint8 g;
+    Uint8 b;
+    Uint8 a;
+} SDL_Color;
+
 SDL_Renderer * SDL_CreateRenderer(SDL_Window * window,
                        int index, uint32_t flags);
 void SDL_DestroyRenderer(SDL_Renderer * renderer);
@@ -216,6 +224,14 @@ static const SDL_Event my_event;
 
 extern "Python" void channel_finished_callback(int channel);
 extern "Python" void music_finished_callback(void);
+
+int TTF_Init(void);
+void TTF_Quit(void);
+typedef struct _TTF_Font TTF_Font;
+TTF_Font * TTF_OpenFont(const char *file, int ptsize);
+SDL_Surface * TTF_RenderUTF8_Blended(TTF_Font *font,
+                const char *text, SDL_Color fg);
+void TTF_CloseFont(TTF_Font *font);
 """
 )
 
@@ -225,6 +241,7 @@ ffibuilder.set_source(
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
+#include <SDL_ttf.h>
 
 SDL_Event my_event;
 
@@ -241,7 +258,7 @@ SDL_Event * get_my_event_ptr(void) {
 }
 """,
     extra_compile_args=[*sdl2_cflags],
-    extra_link_args=[*sdl2_libs, '-lSDL2_image', '-lSDL2_mixer'],
+    extra_link_args=[*sdl2_libs, '-lSDL2_image', '-lSDL2_mixer', '-lSDL2_ttf'],
 )
 
 if __name__ == '__main__':

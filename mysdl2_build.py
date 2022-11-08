@@ -240,6 +240,7 @@ SDL_Surface * TTF_RenderUTF8_Blended(TTF_Font *font,
                 const char *text, SDL_Color fg);
 SDL_Surface * TTF_RenderGlyph32_Blended(TTF_Font *font,
                 Uint32 ch, SDL_Color fg);
+int TTF_GetFontKerningSizeGlyphs32(TTF_Font *font, Uint32 previous_ch, Uint32 ch);
 void TTF_CloseFont(TTF_Font *font);
 """
 )

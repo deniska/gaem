@@ -635,6 +635,14 @@ class Font:
         _mysdl2.lib.SDL_FreeSurface(surf)
         return img
 
+    def draw(self, text, *, x=0, y=0):
+        # TODO: kerning. Although looks surprisingly OK without it.
+        self._ensure_glyphs(text)
+        for c in text:
+            glyph = self._glyphs[c]
+            glyph.draw(x=x, y=y)
+            x += glyph.width
+
     def _ensure_glyphs(self, s):
         if self._surface is None:
             # first time

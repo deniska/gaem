@@ -778,9 +778,10 @@ def set_background_color(red, green, blue, alpha=255):
 def draw_rect(x, y, w, h, color=WHITE, *, blend_mode=BlendMode.BLEND):
     if len(color) == 3:
         color = (color[0], color[1], color[2], 255)
-    _mysdl2.lib.SDL_SetRenderDrawColor(
+    ret = _mysdl2.lib.SDL_SetRenderDrawColor(
         g.ren, color[0], color[1], color[2], color[3]
     )
+    raise_for_neg(ret)
     rect = _mysdl2.ffi.new('SDL_Rect *')
     rect.x = x
     rect.y = y
@@ -795,9 +796,10 @@ def draw_rect(x, y, w, h, color=WHITE, *, blend_mode=BlendMode.BLEND):
 def fill_rect(x, y, w, h, color=WHITE, *, blend_mode=BlendMode.BLEND):
     if len(color) == 3:
         color = (color[0], color[1], color[2], 255)
-    _mysdl2.lib.SDL_SetRenderDrawColor(
+    ret = _mysdl2.lib.SDL_SetRenderDrawColor(
         g.ren, color[0], color[1], color[2], color[3]
     )
+    raise_for_neg(ret)
     rect = _mysdl2.ffi.new('SDL_Rect *')
     rect.x = x
     rect.y = y
@@ -806,6 +808,19 @@ def fill_rect(x, y, w, h, color=WHITE, *, blend_mode=BlendMode.BLEND):
     ret = _mysdl2.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
     raise_for_neg(ret)
     ret = _mysdl2.lib.SDL_RenderFillRect(g.ren, rect)
+    raise_for_neg(ret)
+
+
+def draw_line(x1, y1, x2, y2, color=WHITE, *, blend_mode=BlendMode.BLEND):
+    if len(color) == 3:
+        color = (color[0], color[1], color[2], 255)
+    ret = _mysdl2.lib.SDL_SetRenderDrawColor(
+        g.ren, color[0], color[1], color[2], color[3]
+    )
+    raise_for_neg(ret)
+    ret = _mysdl2.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
+    raise_for_neg(ret)
+    ret = _mysdl2.lib.SDL_RenderDrawLine(g.ren, x1, y1, x2, y2)
     raise_for_neg(ret)
 
 

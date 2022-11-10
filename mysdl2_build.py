@@ -180,6 +180,8 @@ int SDL_RenderDrawRect(SDL_Renderer * renderer,
                        const SDL_Rect * rect);
 int SDL_RenderFillRect(SDL_Renderer * renderer,
                        const SDL_Rect * rect);
+int SDL_RenderDrawLine(SDL_Renderer * renderer,
+                       int x1, int y1, int x2, int y2);
 int SDL_SetRenderDrawBlendMode(SDL_Renderer * renderer,
                                int blendMode);
 int SDL_SetSurfaceBlendMode(SDL_Surface * surface,

@@ -186,6 +186,10 @@ int SDL_SetSurfaceBlendMode(SDL_Surface * surface,
                             int blendMode);
 int SDL_SetTextureBlendMode(SDL_Texture * texture,
                             int blendMode);
+int SDL_SetTextureColorMod(SDL_Texture * texture,
+                           Uint8 r, Uint8 g, Uint8 b);
+int SDL_SetTextureAlphaMod(SDL_Texture * texture,
+                           Uint8 alpha);
 SDL_Surface* SDL_CreateRGBSurface
     (Uint32 flags, int width, int height, int depth,
      Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask);

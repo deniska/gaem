@@ -230,6 +230,7 @@ class Image:
         self.cx = 0.0
         self.cy = 0.0
         self.angle = 0.0
+        self.color = (255, 255, 255, 255)
 
     def draw(
         self,
@@ -242,6 +243,7 @@ class Image:
         cy=None,
         angle=None,
         renderer=None,
+        color=None,
     ):
         if x is None:
             x = self.x
@@ -259,6 +261,10 @@ class Image:
             angle = self.angle
         if renderer is None:
             renderer = g.ren
+        if color is None:
+            color = self.color
+        if len(color) == 3:
+            color = (color[0], color[1], color[2], 255)
         flip_flags = 0
         if sx < 0:
             sx = -sx
@@ -278,7 +284,13 @@ class Image:
         dstrect.h = self.height * sy
         center.x = offset_x
         center.y = offset_y
-        _mysdl2.lib.SDL_RenderCopyExF(
+        ret = _mysdl2.lib.SDL_SetTextureColorMod(
+            self.texture.ptr, color[0], color[1], color[2]
+        )
+        raise_for_neg(ret)
+        ret = _mysdl2.lib.SDL_SetTextureAlphaMod(self.texture.ptr, color[3])
+        raise_for_neg(ret)
+        ret = _mysdl2.lib.SDL_RenderCopyExF(
             renderer,
             self.texture.ptr,
             self._srcrect,
@@ -287,6 +299,7 @@ class Image:
             center,
             flip_flags,
         )
+        raise_for_neg(ret)
 
     def center(self):
         self.cx = self.width / 2
@@ -646,12 +659,12 @@ class Font:
         _mysdl2.lib.SDL_FreeSurface(surf)
         return img
 
-    def draw(self, text, *, x=0, y=0):
+    def draw(self, text, *, x=0, y=0, color=WHITE):
         # TODO: kerning. Although looks surprisingly OK without it.
         self._ensure_glyphs(text)
         for c in text:
             glyph = self._glyphs[c]
-            glyph.draw(x=x, y=y)
+            glyph.draw(x=x, y=y, color=color)
             x += glyph.width
 
     def _ensure_glyphs(self, s):

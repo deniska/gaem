@@ -81,7 +81,7 @@ def run(
     x=None,
     y=None,
     vsync=False,
-    resizable=False
+    resizable=False,
 ):
     ret = _mysdl2.lib.SDL_Init(SDL_INIT_EVERYTHING)
     raise_for_neg(ret)
@@ -241,7 +241,7 @@ class Image:
         cx=None,
         cy=None,
         angle=None,
-        renderer=None
+        renderer=None,
     ):
         if x is None:
             x = self.x
@@ -331,7 +331,7 @@ class Sound:
         looping=False,
         volume=1.0,
         angle=math.tau / 4,
-        distance=0.0
+        distance=0.0,
     ):
         if looping:
             loops = -1
@@ -670,7 +670,14 @@ class Font:
         if self._surface is not None:
             _mysdl2.lib.SDL_FreeSurface(self._surface)
         self._surface = _mysdl2.lib.SDL_CreateRGBSurface(
-            0, w, h, 32, 0, 0, 0, 0xFF
+            0,
+            w,
+            h,
+            32,
+            0xFF_00_00_00,
+            0x00_FF_00_00,
+            0x00_00_FF_00,
+            0x00_00_00_FF,
         )
         raise_for_null(self._surface)
         t = _mysdl2.lib.SDL_CreateTextureFromSurface(g.ren, self._surface)

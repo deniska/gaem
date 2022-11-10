@@ -1,6 +1,7 @@
 import math
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from enum import IntEnum
 
 import _mysdl2
 
@@ -45,6 +46,16 @@ SDLK_SCANCODE_MASK = 1 << 30
 
 AUDIO_S16LSB = 0x8010
 SDL_MIX_MAXVOLUME = 128
+
+WHITE = (255, 255, 255)
+
+
+class BlendMode(IntEnum):
+    NONE = 0x00000000
+    BLEND = 0x00000001
+    ADD = 0x00000002
+    MOD = 0x00000004
+    MUL = 0x00000008
 
 
 class g:  # yes, globals, wanna fight?
@@ -622,7 +633,7 @@ class Font:
     def __del__(self):
         _mysdl2.lib.TTF_CloseFont(self.font)
 
-    def render_text_to_image(self, text, *, color=(255, 255, 255)):
+    def render_text_to_image(self, text, *, color=WHITE):
         if len(color) == 3:
             color = (color[0], color[1], color[2], 255)
         surf = _mysdl2.lib.TTF_RenderUTF8_Blended(
@@ -742,6 +753,40 @@ def get_mouse_position():
 
 def set_background_color(red, green, blue, alpha=255):
     g.background_color = (red, green, blue, alpha)
+
+
+def draw_rect(x, y, w, h, color=WHITE, *, blend_mode=BlendMode.BLEND):
+    if len(color) == 3:
+        color = (color[0], color[1], color[2], 255)
+    _mysdl2.lib.SDL_SetRenderDrawColor(
+        g.ren, color[0], color[1], color[2], color[3]
+    )
+    rect = _mysdl2.ffi.new('SDL_Rect *')
+    rect.x = x
+    rect.y = y
+    rect.w = w
+    rect.h = h
+    ret = _mysdl2.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
+    raise_for_neg(ret)
+    ret = _mysdl2.lib.SDL_RenderDrawRect(g.ren, rect)
+    raise_for_neg(ret)
+
+
+def fill_rect(x, y, w, h, color=WHITE, *, blend_mode=BlendMode.BLEND):
+    if len(color) == 3:
+        color = (color[0], color[1], color[2], 255)
+    _mysdl2.lib.SDL_SetRenderDrawColor(
+        g.ren, color[0], color[1], color[2], color[3]
+    )
+    rect = _mysdl2.ffi.new('SDL_Rect *')
+    rect.x = x
+    rect.y = y
+    rect.w = w
+    rect.h = h
+    ret = _mysdl2.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
+    raise_for_neg(ret)
+    ret = _mysdl2.lib.SDL_RenderFillRect(g.ren, rect)
+    raise_for_neg(ret)
 
 
 def stop_sounds():

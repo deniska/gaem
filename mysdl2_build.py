@@ -176,6 +176,12 @@ int SDL_RenderCopyExF(SDL_Renderer * renderer,
 int SDL_SetRenderDrawColor(SDL_Renderer * renderer,
                    Uint8 r, Uint8 g, Uint8 b,
                    Uint8 a);
+int SDL_RenderDrawRect(SDL_Renderer * renderer,
+                       const SDL_Rect * rect);
+int SDL_RenderFillRect(SDL_Renderer * renderer,
+                       const SDL_Rect * rect);
+int SDL_SetRenderDrawBlendMode(SDL_Renderer * renderer,
+                               int blendMode);
 SDL_Surface* SDL_CreateRGBSurface
     (Uint32 flags, int width, int height, int depth,
      Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask);

@@ -9,8 +9,8 @@ class Game(gaem.Game):
         self.h = 100
 
     def on_draw(self):
-        gaem.draw_rect(100, 200, self.w, self.h)
-        self.font.draw('Hello world', x=100, y=200, h=self.h, w=self.w)
+        gaem.draw_rect(10, 20, self.w, self.h)
+        self.font.draw('Hello world', x=10, y=20, h=self.h, w=self.w)
 
     def on_keydown(self, event):
         if event.scancode == 'escape':

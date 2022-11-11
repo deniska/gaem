@@ -1,4 +1,5 @@
 import math
+import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from enum import IntEnum
@@ -644,6 +645,7 @@ class Font:
         self._x = 0
         self._y = 0
         self._dstrect = _mysdl2.ffi.new('SDL_Rect *')
+        self.line_skip = _mysdl2.lib.TTF_FontLineSkip(self.font)
 
     def __del__(self):
         _mysdl2.lib.TTF_CloseFont(self.font)
@@ -690,14 +692,73 @@ class Font:
             ret = _mysdl2.lib.SDL_RenderSetClipRect(g.ren, clip_rect)
             raise_for_neg(ret)
 
-        for c in text:
-            glyph = self._glyphs[c]
-            glyph.draw(x=x, y=y, color=color)
-            x += glyph.width
+        # I should really use something like harfbuzz
+        # instead of trying to layout text myself
+        # but it should work for boring LTR writing I use
+        if not multiline:
+            # simple algorithm
+            for c in text:
+                glyph = self._glyphs[c]
+                glyph.draw(x=x, y=y, color=color)
+                x += glyph.width
+        else:
+            lines = self._calculate_line_widths(text, w)
+            for line_width, words in lines:
+                current_x = x
+                for word in words:
+                    for c in word:
+                        glyph = self._glyphs[c]
+                        glyph.draw(x=current_x, y=y, color=color)
+                        current_x += glyph.width
+                y += self.line_skip
 
         if clipping:
             ret = _mysdl2.lib.SDL_RenderSetClipRect(g.ren, NULL)
             raise_for_neg(ret)
+
+    def _calculate_line_widths(self, text, w):
+        # here we go, first let's calculate lines and widths
+        lines = []  # list of (width, words) tuples
+        current_line = []
+        words = re.split(r'(?<=\S)(?=\s)', text)
+        cursor = 0
+        current_line_width = 0
+        while cursor < len(words):
+            word = words[cursor]
+            word_width = sum(self._glyphs[c].width for c in word)
+            # can we fit the current word?
+            if word_width + current_line_width <= w:
+                # we can
+                cursor += 1
+                current_line_width += word_width
+                current_line.append(word)
+            else:
+                # we can't
+                if current_line_width == 0:
+                    # oh no, we're still at the first word
+                    # we'll have to split it at whatever characters fit
+                    # always fit the first character in case if
+                    # it is wider than available width
+                    word_width = self._glyphs[word[0]].width
+                    if len(word) == 1:
+                        cursor += 1
+                        lines.append((word_width, [word]))
+                    for i, c in enumerate(word[1:], start=1):
+                        glyph_width = self._glyphs[c].width
+                        if word_width + glyph_width > w:
+                            words[cursor] = word[i:]
+                            lines.append((word_width, [word[:i]]))
+                            break
+                        word_width += glyph_width
+                else:
+                    # current word goes on the next line
+                    # with whitespace stripped
+                    words[cursor] = word.lstrip()
+                    lines.append((current_line_width, current_line))
+                current_line_width = 0
+                current_line = []
+        lines.append((current_line_width, current_line))
+        return lines
 
     def _ensure_glyphs(self, s):
         if self._surface is None:

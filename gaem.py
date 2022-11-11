@@ -529,10 +529,12 @@ class SDL2Texture:
         self.ptr = texture
 
     def __del__(self):
-        _mysdl2.lib.SDL_DestroyTexture(self.ptr)
+        if self.ptr is not None:
+            _mysdl2.lib.SDL_DestroyTexture(self.ptr)
 
     def replace(self, texture):
-        _mysdl2.lib.SDL_DestroyTexture(self.ptr)
+        if self.ptr is not None:
+            _mysdl2.lib.SDL_DestroyTexture(self.ptr)
         self.ptr = texture
 
 
@@ -637,7 +639,7 @@ class Font:
         self.font = font
         self._glyphs = {}
         self._surface = None
-        self._texture = None
+        self._texture = SDL2Texture(None)
         self._height = 0
         self._x = 0
         self._y = 0
@@ -659,13 +661,43 @@ class Font:
         _mysdl2.lib.SDL_FreeSurface(surf)
         return img
 
-    def draw(self, text, *, x=0, y=0, color=WHITE):
+    def draw(
+        self, text, *, x=0, y=0, w=None, h=None, sx=1.0, sy=1.0, color=WHITE
+    ):
         # TODO: kerning. Although looks surprisingly OK without it.
         self._ensure_glyphs(text)
+
+        multiline = True
+        clipping = False
+
+        if w is not None:
+            using_clipping = True
+            w *= sx
+            clip_left = int(min(x, x + w))
+            clip_right = int(max(x, x + w))
+            clip_top = 0
+            clip_bottom = g.screen_height
+            if h is not None:
+                single_line = False
+                h *= sy
+                clip_top = int(min(y, y + h))
+                clip_bottom = int(max(y, y + h))
+            clip_rect = _mysdl2.ffi.new('SDL_Rect *')
+            clip_rect.x = clip_left
+            clip_rect.y = clip_top
+            clip_rect.w = clip_right - clip_left
+            clip_rect.h = clip_bottom - clip_top
+            ret = _mysdl2.lib.SDL_RenderSetClipRect(g.ren, clip_rect)
+            raise_for_neg(ret)
+
         for c in text:
             glyph = self._glyphs[c]
             glyph.draw(x=x, y=y, color=color)
             x += glyph.width
+
+        if clipping:
+            ret = _mysdl2.lib.SDL_RenderSetClipRect(g.ren, NULL)
+            raise_for_neg(ret)
 
     def _ensure_glyphs(self, s):
         if self._surface is None:
@@ -693,9 +725,7 @@ class Font:
             0x00_00_00_FF,
         )
         raise_for_null(self._surface)
-        t = _mysdl2.lib.SDL_CreateTextureFromSurface(g.ren, self._surface)
-        raise_for_null(t)
-        self._texture = SDL2Texture(t)
+        self._texture = SDL2Texture(None)
         self._height = 0
         self._x = 0
         self._y = 0

@@ -192,6 +192,8 @@ int SDL_SetTextureColorMod(SDL_Texture * texture,
                            Uint8 r, Uint8 g, Uint8 b);
 int SDL_SetTextureAlphaMod(SDL_Texture * texture,
                            Uint8 alpha);
+int SDL_RenderSetClipRect(SDL_Renderer * renderer,
+                          const SDL_Rect * rect);
 SDL_Surface* SDL_CreateRGBSurface
     (Uint32 flags, int width, int height, int depth,
      Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask);

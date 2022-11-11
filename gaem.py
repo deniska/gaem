@@ -1,8 +1,8 @@
+import enum
 import math
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from enum import IntEnum
 
 import _mysdl2
 
@@ -51,12 +51,19 @@ SDL_MIX_MAXVOLUME = 128
 WHITE = (255, 255, 255)
 
 
-class BlendMode(IntEnum):
+class BlendMode(enum.IntEnum):
     NONE = 0x00000000
     BLEND = 0x00000001
     ADD = 0x00000002
     MOD = 0x00000004
     MUL = 0x00000008
+
+
+class TextAlign(enum.Enum):
+    LEFT = enum.auto()
+    CENTER = enum.auto()
+    RIGHT = enum.auto()
+    # todo: justified?
 
 
 class g:  # yes, globals, wanna fight?
@@ -664,12 +671,22 @@ class Font:
         return img
 
     def draw(
-        self, text, *, x=0, y=0, w=None, h=None, sx=1.0, sy=1.0, color=WHITE
+        self,
+        text,
+        *,
+        x=0,
+        y=0,
+        w=None,
+        h=None,
+        sx=1.0,
+        sy=1.0,
+        color=WHITE,
+        align=TextAlign.LEFT,
     ):
         # TODO: kerning. Although looks surprisingly OK without it.
         self._ensure_glyphs(text)
 
-        multiline = True
+        multiline = False
         clipping = False
 
         if w is not None:
@@ -680,7 +697,7 @@ class Font:
             clip_top = 0
             clip_bottom = g.screen_height
             if h is not None:
-                single_line = False
+                multiline = True
                 h *= sy
                 clip_top = int(min(y, y + h))
                 clip_bottom = int(max(y, y + h))
@@ -697,6 +714,12 @@ class Font:
         # but it should work for boring LTR writing I use
         if not multiline:
             # simple algorithm
+            line_width = sum(self._glyphs[c].width for c in text)
+            if w is not None:
+                if align is TextAlign.CENTER:
+                    x += (w - line_width) / 2
+                elif align is TextAlign.RIGHT:
+                    x += w - line_width
             for c in text:
                 glyph = self._glyphs[c]
                 glyph.draw(x=x, y=y, color=color)
@@ -705,6 +728,10 @@ class Font:
             lines = self._calculate_line_widths(text, w)
             for line_width, words in lines:
                 current_x = x
+                if align is TextAlign.CENTER:
+                    current_x += (w - line_width) / 2
+                elif align is TextAlign.RIGHT:
+                    current_x += w - line_width
                 for word in words:
                     for c in word:
                         glyph = self._glyphs[c]

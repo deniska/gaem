@@ -1,15 +1,21 @@
 import subprocess
+from pathlib import Path
 
 from cffi import FFI
 
-sdl2_config = '/home/denis/sdk/sdl2/bin/sdl2-config'
+sdl2_config = Path(__file__).parent / Path(
+    'build_scripts', 'prefix', 'bin', 'sdl2-config'
+)
 
-sdl2_cflags = subprocess.run(
+cflags = subprocess.run(
     [sdl2_config, '--cflags'], stdout=subprocess.PIPE, encoding='utf-8'
 ).stdout.split()
-sdl2_libs = subprocess.run(
+ldflags = subprocess.run(
     [sdl2_config, '--libs'], stdout=subprocess.PIPE, encoding='utf-8'
 ).stdout.split()
+
+ldflags += ['-lSDL2_image', '-lSDL2_mixer', '-lSDL2_ttf']
+ldflags += ['-Wl,-rpath=$ORIGIN/libs']
 
 ffibuilder = FFI()
 
@@ -286,8 +292,8 @@ SDL_Event * get_my_event_ptr(void) {
     return &my_event;
 }
 """,
-    extra_compile_args=[*sdl2_cflags],
-    extra_link_args=[*sdl2_libs, '-lSDL2_image', '-lSDL2_mixer', '-lSDL2_ttf'],
+    extra_compile_args=cflags,
+    extra_link_args=ldflags,
 )
 
 if __name__ == '__main__':

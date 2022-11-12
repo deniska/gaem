@@ -3,3 +3,7 @@ __pycache__
 /*.o
 /*.c
 /*.so
+/build_scripts/dl
+/build_scripts/out
+/build_scripts/prefix
+/build_scripts/src

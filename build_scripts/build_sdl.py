@@ -7,7 +7,7 @@ base_dir = pathlib.Path(__file__).parent
 download_dir = base_dir / 'dl'
 src_dir = base_dir / 'src'
 prefix_dir = base_dir / 'prefix'
-out_dir = base_dir / 'out'
+out_dir = base_dir.parent / 'libs'
 
 
 def build_sdl():
@@ -32,6 +32,11 @@ def build_sdl():
         'libSDL2_mixer.so',
         'libSDL2_ttf.so',
     )
+
+    copy_to_out('libSDL2-2.0.so.0')
+    copy_to_out('libSDL2_image-2.0.so.0')
+    copy_to_out('libSDL2_mixer-2.0.so.0')
+    copy_to_out('libSDL2_ttf-2.0.so.0')
 
 
 def build(name, *opts):
@@ -67,6 +72,11 @@ def make(name):
 def make_install(name):
     cwd = src_dir / name
     subprocess.check_call(['make', 'install'], cwd=cwd)
+
+
+def copy_to_out(name):
+    print(f'Copying {name} to libs')
+    shutil.copy(prefix_dir / 'lib' / name, out_dir / name)
 
 
 def clear_dir(d):

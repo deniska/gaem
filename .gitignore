@@ -7,3 +7,4 @@ __pycache__
 /build_scripts/out
 /build_scripts/prefix
 /build_scripts/src
+/libs

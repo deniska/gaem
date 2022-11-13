@@ -28,6 +28,8 @@ typedef int32_t Sint32;
 typedef int16_t Sint16;
 typedef Sint32 SDL_Keycode;
 
+typedef int SDL_bool;
+
 typedef struct SDL_version
 {
     uint8_t major;
@@ -154,6 +156,48 @@ typedef struct SDL_WindowEvent
     Sint32 data1;
     Sint32 data2;
 } SDL_WindowEvent;
+
+typedef Sint32 SDL_JoystickID;
+typedef struct _SDL_GameController SDL_GameController;
+typedef struct _SDL_Joystick SDL_Joystick;
+SDL_GameController* SDL_GameControllerOpen(int joystick_index);
+SDL_Joystick* SDL_GameControllerGetJoystick(SDL_GameController *gamecontroller);
+SDL_JoystickID SDL_JoystickInstanceID(SDL_Joystick *joystick);
+SDL_bool SDL_IsGameController(int joystick_index);
+Sint16 SDL_GameControllerGetAxis(SDL_GameController *gamecontroller, int axis);
+Uint8 SDL_GameControllerGetButton(SDL_GameController *gamecontroller,
+                                  int button);
+
+typedef struct SDL_ControllerDeviceEvent
+{
+    Uint32 type;
+    Uint32 timestamp;
+    Sint32 which;
+} SDL_ControllerDeviceEvent;
+
+typedef struct SDL_ControllerButtonEvent
+{
+    Uint32 type;
+    Uint32 timestamp;
+    SDL_JoystickID which;
+    Uint8 button;
+    Uint8 state;
+    Uint8 padding1;
+    Uint8 padding2;
+} SDL_ControllerButtonEvent;
+
+typedef struct SDL_ControllerAxisEvent
+{
+    Uint32 type;
+    Uint32 timestamp;
+    SDL_JoystickID which;
+    Uint8 axis;
+    Uint8 padding1;
+    Uint8 padding2;
+    Uint8 padding3;
+    Sint16 value;
+    Uint16 padding4;
+} SDL_ControllerAxisEvent;
 
 typedef struct SDL_Color
 {

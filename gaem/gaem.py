@@ -31,6 +31,27 @@ SDL_TEXTINPUT = 0x303
 SDL_KEYMAPCHANGED = 0x304
 SDL_TEXTEDITING_EXT = 0x305
 
+SDL_JOYAXISMOTION = 0x600
+SDL_JOYBALLMOTION = 0x601
+SDL_JOYHATMOTION = 0x602
+SDL_JOYBUTTONDOWN = 0x603
+SDL_JOYBUTTONUP = 0x604
+SDL_JOYDEVICEADDED = 0x605
+SDL_JOYDEVICEREMOVED = 0x606
+
+SDL_CONTROLLERAXISMOTION = 0x650
+SDL_CONTROLLERBUTTONDOWN = 0x651
+SDL_CONTROLLERBUTTONUP = 0x652
+SDL_CONTROLLERDEVICEADDED = 0x653
+SDL_CONTROLLERDEVICEREMOVED = 0x654
+
+SDL_CONTROLLER_AXIS_LEFTX = 0
+SDL_CONTROLLER_AXIS_LEFTY = 1
+SDL_CONTROLLER_AXIS_RIGHTX = 2
+SDL_CONTROLLER_AXIS_RIGHTY = 3
+SDL_CONTROLLER_AXIS_TRIGGERLEFT = 4
+SDL_CONTROLLER_AXIS_TRIGGERRIGHT = 5
+
 SDL_MOUSEMOTION = 0x400
 SDL_MOUSEBUTTONDOWN = 0x401
 SDL_MOUSEBUTTONUP = 0x402
@@ -78,6 +99,7 @@ class g:  # yes, globals, wanna fight?
     pressed_mouse_buttons = set()
     background_color = (0, 0, 0, 255)
     music_finished = False
+    gamepads = {}
 
 
 def run(
@@ -191,6 +213,58 @@ def run(
                     g.screen_width = event.width
                     g.screen_height = event.height
                     game.on_resize(event)
+            elif ev_type == SDL_CONTROLLERDEVICEADDED:
+                sdl_controller_event = _gaem.ffi.cast(
+                    'SDL_ControllerDeviceEvent *', sdl2_event
+                )
+                idx = sdl_controller_event.which
+                if not _gaem.lib.SDL_IsGameController(idx):
+                    continue
+                controller = _gaem.lib.SDL_GameControllerOpen(idx)
+                raise_for_null(controller)
+                joystick = _gaem.lib.SDL_GameControllerGetJoystick(controller)
+                raise_for_null(joystick)
+                instance_id = _gaem.lib.SDL_JoystickInstanceID(joystick)
+                gamepad = Gamepad(controller)
+                g.gamepads[instance_id] = gamepad
+                game.on_gamepad_connected(gamepad)
+            elif ev_type == SDL_CONTROLLERDEVICEREMOVED:
+                sdl_controller_event = _gaem.ffi.cast(
+                    'SDL_ControllerDeviceEvent *', sdl2_event
+                )
+                gamepad = g.gamepads.pop(sdl_controller_event.which)
+                game.on_gamepad_disconnected(gamepad)
+            elif ev_type == SDL_CONTROLLERBUTTONDOWN:
+                sdl_controller_event = _gaem.ffi.cast(
+                    'SDL_ControllerButtonEvent *', sdl2_event
+                )
+                gamepad = g.gamepads.get(sdl_controller_event.which)
+                event = GamepadButtonEvent(
+                    gamepad=gamepad,
+                    button=gamepad_button_names[sdl_controller_event.button],
+                )
+                game.on_gamepad_button_down(event)
+            elif ev_type == SDL_CONTROLLERBUTTONUP:
+                sdl_controller_event = _gaem.ffi.cast(
+                    'SDL_ControllerButtonEvent *', sdl2_event
+                )
+                gamepad = g.gamepads.get(sdl_controller_event.which)
+                event = GamepadButtonEvent(
+                    gamepad=gamepad,
+                    button=gamepad_button_names[sdl_controller_event.button],
+                )
+                game.on_gamepad_button_up(event)
+            elif ev_type == SDL_CONTROLLERAXISMOTION:
+                sdl_controller_event = _gaem.ffi.cast(
+                    'SDL_ControllerAxisEvent *', sdl2_event
+                )
+                gamepad = g.gamepads.get(sdl_controller_event.which)
+                event = GamepadAxisEvent(
+                    gamepad=gamepad,
+                    axis=gamepad_axis_names[sdl_controller_event.axis],
+                    value=sdl_controller_event.value / 32767,
+                )
+                game.on_gamepad_axis_motion(event)
             if g.music_finished:
                 g.music_finished = False
                 game.on_music_finished()
@@ -518,6 +592,39 @@ class Music:
         _gaem.lib.Mix_PlayMusic(self.music, loops)
 
 
+class Gamepad:
+    def __init__(self, controller):
+        self.controller = controller
+
+    def is_button_pressed(self, button):
+        if self.controller is None:
+            return False
+        button_id = gamepad_button_ids.get(button)
+        if button_id is None:
+            raise ValueError(f'Unknown button {button}')
+        return bool(
+            _gaem.lib.SDL_GameControllerGetButton(self.controller, button_id)
+        )
+
+    def get_axis(self, axis):
+        if self.controller is None:
+            return 0.0
+        axis_id = gamepad_axis_ids.get(axis)
+        if axis_id is None:
+            raise ValueError(f'Unknown axis {button}')
+        return (
+            _gaem.lib.SDL_GameControllerGetAxis(self.controller, axis_id)
+            / 32767
+        )
+
+    def __getattr__(self, name):
+        if name.startswith('axis_'):
+            return self.get_axis(name.removeprefix('axis_'))
+        elif name.startswith('button_'):
+            return self.is_button_pressed(name.removeprefix('button_'))
+        super().__getattr__(name)  # basically raise the usual exception
+
+
 @_gaem.ffi.def_extern()
 def channel_finished_callback(channel_id):
     Channel.get_or_create(channel_id)._on_finished()
@@ -609,6 +716,19 @@ class MouseButtonEvent:
 class ResizeEvent:
     width: int
     height: int
+
+
+@dataclass
+class GamepadButtonEvent:
+    gamepad: Gamepad
+    button: str
+
+
+@dataclass
+class GamepadAxisEvent:
+    gamepad: Gamepad
+    axis: str
+    value: float
 
 
 def load_image(path, *, center=False):
@@ -887,6 +1007,10 @@ def get_mouse_position():
     return (g.mouse_x, g.mouse_y)
 
 
+def get_gamepads():
+    return list(g.gamepads.values())
+
+
 def set_background_color(red, green, blue, alpha=255):
     g.background_color = (red, green, blue, alpha)
 
@@ -899,10 +1023,10 @@ def draw_rect(x, y, w, h, color=WHITE, *, blend_mode=BlendMode.BLEND):
     )
     raise_for_neg(ret)
     rect = _gaem.ffi.new('SDL_Rect *')
-    rect.x = x
-    rect.y = y
-    rect.w = w
-    rect.h = h
+    rect.x = int(x)
+    rect.y = int(y)
+    rect.w = int(w)
+    rect.h = int(h)
     ret = _gaem.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
     raise_for_neg(ret)
     ret = _gaem.lib.SDL_RenderDrawRect(g.ren, rect)
@@ -917,10 +1041,10 @@ def fill_rect(x, y, w, h, color=WHITE, *, blend_mode=BlendMode.BLEND):
     )
     raise_for_neg(ret)
     rect = _gaem.ffi.new('SDL_Rect *')
-    rect.x = x
-    rect.y = y
-    rect.w = w
-    rect.h = h
+    rect.x = int(x)
+    rect.y = int(y)
+    rect.w = int(w)
+    rect.h = int(h)
     ret = _gaem.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
     raise_for_neg(ret)
     ret = _gaem.lib.SDL_RenderFillRect(g.ren, rect)
@@ -936,7 +1060,9 @@ def draw_line(x1, y1, x2, y2, color=WHITE, *, blend_mode=BlendMode.BLEND):
     raise_for_neg(ret)
     ret = _gaem.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
     raise_for_neg(ret)
-    ret = _gaem.lib.SDL_RenderDrawLine(g.ren, x1, y1, x2, y2)
+    ret = _gaem.lib.SDL_RenderDrawLine(
+        g.ren, int(x1), int(y1), int(x2), int(y2)
+    )
     raise_for_neg(ret)
 
 
@@ -1016,6 +1142,21 @@ class Game:
         pass
 
     def on_mouseup(self, event):
+        pass
+
+    def on_gamepad_connected(self, gamepad):
+        pass
+
+    def on_gamepad_disconnected(self, gamepad):
+        pass
+
+    def on_gamepad_button_down(self, event):
+        pass
+
+    def on_gamepad_button_up(self, event):
+        pass
+
+    def on_gamepad_axis_motion(self, event):
         pass
 
     def on_quit(self):
@@ -1280,3 +1421,40 @@ scancodes = {
     289: 'call',
     290: 'endcall',
 }
+
+gamepad_axis_names = {
+    0: 'left_x',
+    1: 'left_y',
+    2: 'right_x',
+    3: 'right_y',
+    4: 'trigger_left',
+    5: 'trigger_right',
+}
+
+gamepad_axis_ids = {v: k for k, v in gamepad_axis_names.items()}
+
+gamepad_button_names = {
+    0: 'a',
+    1: 'b',
+    2: 'x',
+    3: 'y',
+    4: 'back',
+    5: 'guide',
+    6: 'start',
+    7: 'leftstick',
+    8: 'rightstick',
+    9: 'leftshoulder',
+    10: 'rightshoulder',
+    11: 'dpad_up',
+    12: 'dpad_down',
+    13: 'dpad_left',
+    14: 'dpad_right',
+    15: 'misc1',
+    16: 'paddle1',
+    17: 'paddle2',
+    18: 'paddle3',
+    19: 'paddle4',
+    20: 'touchpad',
+}
+
+gamepad_button_ids = {v: k for k, v in gamepad_button_names.items()}

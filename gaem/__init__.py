@@ -6,6 +6,7 @@ from gaem.gaem import (
     draw_line,
     draw_rect,
     fill_rect,
+    get_gamepads,
     get_mouse_position,
     get_screen_size,
     is_key_pressed,

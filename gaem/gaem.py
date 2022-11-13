@@ -4,9 +4,9 @@ import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 
-import _mysdl2
+import _gaem
 
-NULL = _mysdl2.ffi.NULL
+NULL = _gaem.ffi.NULL
 
 SDL_WINDOWPOS_CENTERED = 0x2FFF0000
 SDL_WINDOWPOS_UNDEFINED = 0x1FFF0000
@@ -91,19 +91,19 @@ def run(
     vsync=False,
     resizable=False,
 ):
-    ret = _mysdl2.lib.SDL_Init(SDL_INIT_EVERYTHING)
+    ret = _gaem.lib.SDL_Init(SDL_INIT_EVERYTHING)
     raise_for_neg(ret)
 
     img_flags = IMG_INIT_PNG | IMG_INIT_JPG
-    if img_flags != _mysdl2.lib.IMG_Init(img_flags):
+    if img_flags != _gaem.lib.IMG_Init(img_flags):
         raise GaemError('Failed to initialize SDL_Image')
 
-    ret = _mysdl2.lib.Mix_OpenAudio(44100, AUDIO_S16LSB, 2, 512)
+    ret = _gaem.lib.Mix_OpenAudio(44100, AUDIO_S16LSB, 2, 512)
     raise_for_neg(ret)
-    _mysdl2.lib.Mix_ChannelFinished(_mysdl2.lib.channel_finished_callback)
-    _mysdl2.lib.Mix_HookMusicFinished(_mysdl2.lib.music_finished_callback)
+    _gaem.lib.Mix_ChannelFinished(_gaem.lib.channel_finished_callback)
+    _gaem.lib.Mix_HookMusicFinished(_gaem.lib.music_finished_callback)
 
-    ret = _mysdl2.lib.TTF_Init()
+    ret = _gaem.lib.TTF_Init()
     raise_for_neg(ret)
 
     if x is None:
@@ -116,29 +116,29 @@ def run(
         flags |= SDL_WINDOW_RESIZABLE
     g.screen_width = width
     g.screen_height = height
-    g.win = _mysdl2.lib.SDL_CreateWindow(title, x, y, width, height, flags)
+    g.win = _gaem.lib.SDL_CreateWindow(title, x, y, width, height, flags)
     raise_for_null(g.win)
 
     flags = SDL_RENDERER_ACCELERATED
     if vsync:
         flags |= SDL_RENDERER_PRESENTVSYNC
-    g.ren = _mysdl2.lib.SDL_CreateRenderer(g.win, -1, flags)
+    g.ren = _gaem.lib.SDL_CreateRenderer(g.win, -1, flags)
     raise_for_null(g.ren)
 
     game.on_load()
 
     previous_ticks = None
-    counter_resolution = _mysdl2.lib.SDL_GetPerformanceFrequency()
+    counter_resolution = _gaem.lib.SDL_GetPerformanceFrequency()
 
-    sdl2_event = _mysdl2.lib.get_my_event_ptr()
+    sdl2_event = _gaem.lib.gaem_get_event_ptr()
     while not g.should_quit:
-        while _mysdl2.lib.my_poll_event():
-            ev_type = _mysdl2.lib.my_get_event_type()
+        while _gaem.lib.gaem_poll_event():
+            ev_type = _gaem.lib.gaem_get_event_type()
             if ev_type == SDL_QUIT:
                 ret = game.on_quit()
                 g.should_quit = bool(ret)
             elif ev_type == SDL_KEYDOWN:
-                sdl_kb_event = _mysdl2.ffi.cast(
+                sdl_kb_event = _gaem.ffi.cast(
                     'SDL_KeyboardEvent *', sdl2_event
                 )
                 if sdl_kb_event.repeat:
@@ -147,14 +147,14 @@ def run(
                 g.pressed_keys.add(event.scancode)
                 game.on_keydown(event)
             elif ev_type == SDL_KEYUP:
-                sdl_kb_event = _mysdl2.ffi.cast(
+                sdl_kb_event = _gaem.ffi.cast(
                     'SDL_KeyboardEvent *', sdl2_event
                 )
                 event = KeyboardEvent.from_sdl_event(sdl_kb_event)
                 g.pressed_keys.discard(event.scancode)
                 game.on_keyup(event)
             elif ev_type == SDL_MOUSEMOTION:
-                sdl_mouse_motion_event = _mysdl2.ffi.cast(
+                sdl_mouse_motion_event = _gaem.ffi.cast(
                     'SDL_MouseMotionEvent *', sdl2_event
                 )
                 event = MouseMotionEvent.from_sdl_event(sdl_mouse_motion_event)
@@ -162,7 +162,7 @@ def run(
                 g.mouse_y = event.y
                 game.on_mousemotion(event)
             elif ev_type == SDL_MOUSEBUTTONDOWN:
-                sdl_mouse_button_event = _mysdl2.ffi.cast(
+                sdl_mouse_button_event = _gaem.ffi.cast(
                     'SDL_MouseButtonEvent *', sdl2_event
                 )
                 event = MouseButtonEvent.from_sdl_event(sdl_mouse_button_event)
@@ -171,7 +171,7 @@ def run(
                 g.pressed_mouse_buttons.add(event.button)
                 game.on_mousedown(event)
             elif ev_type == SDL_MOUSEBUTTONUP:
-                sdl_mouse_button_event = _mysdl2.ffi.cast(
+                sdl_mouse_button_event = _gaem.ffi.cast(
                     'SDL_MouseButtonEvent *', sdl2_event
                 )
                 event = MouseButtonEvent.from_sdl_event(sdl_mouse_button_event)
@@ -180,7 +180,7 @@ def run(
                 g.pressed_mouse_buttons.discard(event.button)
                 game.on_mouseup(event)
             elif ev_type == SDL_WINDOWEVENT:
-                sdl_window_event = _mysdl2.ffi.cast(
+                sdl_window_event = _gaem.ffi.cast(
                     'SDL_WindowEvent *', sdl2_event
                 )
                 if sdl_window_event.event == SDL_WINDOWEVENT_SIZE_CHANGED:
@@ -197,26 +197,26 @@ def run(
         if g.music_finished:  # again in case we polled no sdl events
             g.music_finished = False
             game.on_music_finished()
-        _mysdl2.lib.SDL_SetRenderDrawColor(g.ren, *g.background_color)
-        _mysdl2.lib.SDL_RenderClear(g.ren)
+        _gaem.lib.SDL_SetRenderDrawColor(g.ren, *g.background_color)
+        _gaem.lib.SDL_RenderClear(g.ren)
         if previous_ticks:
-            current_ticks = _mysdl2.lib.SDL_GetPerformanceCounter()
+            current_ticks = _gaem.lib.SDL_GetPerformanceCounter()
             dt = (current_ticks - previous_ticks) / counter_resolution
             previous_ticks = current_ticks
             game.on_update(dt)
         else:
-            previous_ticks = _mysdl2.lib.SDL_GetPerformanceCounter()
+            previous_ticks = _gaem.lib.SDL_GetPerformanceCounter()
         game.on_draw()
-        _mysdl2.lib.SDL_RenderPresent(g.ren)
+        _gaem.lib.SDL_RenderPresent(g.ren)
 
     del game
 
-    _mysdl2.lib.SDL_DestroyRenderer(g.ren)
-    _mysdl2.lib.SDL_DestroyWindow(g.win)
-    _mysdl2.lib.Mix_CloseAudio()
-    _mysdl2.lib.TTF_Quit()
-    _mysdl2.lib.IMG_Quit()
-    _mysdl2.lib.SDL_Quit()
+    _gaem.lib.SDL_DestroyRenderer(g.ren)
+    _gaem.lib.SDL_DestroyWindow(g.win)
+    _gaem.lib.Mix_CloseAudio()
+    _gaem.lib.TTF_Quit()
+    _gaem.lib.IMG_Quit()
+    _gaem.lib.SDL_Quit()
 
 
 class Image:
@@ -224,13 +224,13 @@ class Image:
         self.texture = texture
         self.width = width
         self.height = height
-        self._srcrect = _mysdl2.ffi.new('SDL_Rect *')
+        self._srcrect = _gaem.ffi.new('SDL_Rect *')
         self._srcrect.x = 0
         self._srcrect.y = 0
         self._srcrect.w = width
         self._srcrect.h = height
-        self._dstrect = _mysdl2.ffi.new('SDL_FRect *')
-        self._center = _mysdl2.ffi.new('SDL_FPoint *')
+        self._dstrect = _gaem.ffi.new('SDL_FRect *')
+        self._center = _gaem.ffi.new('SDL_FPoint *')
         self.x = 0.0
         self.y = 0.0
         self.sx = 1.0
@@ -292,13 +292,13 @@ class Image:
         dstrect.h = self.height * sy
         center.x = offset_x
         center.y = offset_y
-        ret = _mysdl2.lib.SDL_SetTextureColorMod(
+        ret = _gaem.lib.SDL_SetTextureColorMod(
             self.texture.ptr, color[0], color[1], color[2]
         )
         raise_for_neg(ret)
-        ret = _mysdl2.lib.SDL_SetTextureAlphaMod(self.texture.ptr, color[3])
+        ret = _gaem.lib.SDL_SetTextureAlphaMod(self.texture.ptr, color[3])
         raise_for_neg(ret)
-        ret = _mysdl2.lib.SDL_RenderCopyExF(
+        ret = _gaem.lib.SDL_RenderCopyExF(
             renderer,
             self.texture.ptr,
             self._srcrect,
@@ -358,7 +358,7 @@ class Sound:
             loops = -1
         else:
             loops = 0
-        ret = _mysdl2.lib.Mix_PlayChannel(channel_id, self.chunk, loops)
+        ret = _gaem.lib.Mix_PlayChannel(channel_id, self.chunk, loops)
         if ret == -1:
             return None
         channel = Channel.get_or_create(ret)
@@ -367,15 +367,15 @@ class Sound:
         return channel
 
     def __del__(self):
-        _mysdl2.lib.Mix_FreeChunk(self.chunk)
+        _gaem.lib.Mix_FreeChunk(self.chunk)
 
     @property
     def volume(self):
-        return _mysdl2.lib.Mix_VolumeChunk(self.chunk, -1) / SDL_MIX_MAXVOLUME
+        return _gaem.lib.Mix_VolumeChunk(self.chunk, -1) / SDL_MIX_MAXVOLUME
 
     @volume.setter
     def volume(self, val):
-        _mysdl2.lib.Mix_VolumeChunk(self.chunk, int(val * SDL_MIX_MAXVOLUME))
+        _gaem.lib.Mix_VolumeChunk(self.chunk, int(val * SDL_MIX_MAXVOLUME))
 
     def looper(self):
         return SoundPlayer(self, looping=True)
@@ -475,23 +475,21 @@ class Channel:
         return channel
 
     def stop(self):
-        ret = _mysdl2.lib.Mix_HaltChannel(self.channel_id)
+        ret = _gaem.lib.Mix_HaltChannel(self.channel_id)
         raise_for_neg(ret)
 
     def pause(self):
-        _mysdl2.lib.Mix_Pause(self.channel_id)
+        _gaem.lib.Mix_Pause(self.channel_id)
 
     def play(self):
-        _mysdl2.lib.Mix_Resume(self.channel_id)
+        _gaem.lib.Mix_Resume(self.channel_id)
 
     def set_volume(self, volume):
-        _mysdl2.lib.Mix_Volume(
-            self.channel_id, int(volume * SDL_MIX_MAXVOLUME)
-        )
+        _gaem.lib.Mix_Volume(self.channel_id, int(volume * SDL_MIX_MAXVOLUME))
 
     def set_position(self, angle, distance):
         distance = min(max(distance, 0.0), 1.0)
-        _mysdl2.lib.Mix_SetPosition(
+        _gaem.lib.Mix_SetPosition(
             self.channel_id,
             int(angle / math.tau * 360.0 - 90.0),
             int(distance * 255),
@@ -510,22 +508,22 @@ class Music:
         self.music = music
 
     def __del__(self):
-        _mysdl2.lib.Mix_FreeMusic(self.music)
+        _gaem.lib.Mix_FreeMusic(self.music)
 
     def play(self, *, looping=False):
         if looping:
             loops = -1
         else:
             loops = 0
-        _mysdl2.lib.Mix_PlayMusic(self.music, loops)
+        _gaem.lib.Mix_PlayMusic(self.music, loops)
 
 
-@_mysdl2.ffi.def_extern()
+@_gaem.ffi.def_extern()
 def channel_finished_callback(channel_id):
     Channel.get_or_create(channel_id)._on_finished()
 
 
-@_mysdl2.ffi.def_extern()
+@_gaem.ffi.def_extern()
 def music_finished_callback():
     g.music_finished = True
 
@@ -538,11 +536,11 @@ class SDL2Texture:
 
     def __del__(self):
         if self.ptr is not None:
-            _mysdl2.lib.SDL_DestroyTexture(self.ptr)
+            _gaem.lib.SDL_DestroyTexture(self.ptr)
 
     def replace(self, texture):
         if self.ptr is not None:
-            _mysdl2.lib.SDL_DestroyTexture(self.ptr)
+            _gaem.lib.SDL_DestroyTexture(self.ptr)
         self.ptr = texture
 
 
@@ -614,12 +612,12 @@ class ResizeEvent:
 
 
 def load_image(path, *, center=False):
-    surf = _mysdl2.lib.IMG_Load(to_cstr(path))
+    surf = _gaem.lib.IMG_Load(to_cstr(path))
     raise_for_null(surf)
-    texture = _mysdl2.lib.SDL_CreateTextureFromSurface(g.ren, surf)
+    texture = _gaem.lib.SDL_CreateTextureFromSurface(g.ren, surf)
     raise_for_null(texture)
     img = Image(SDL2Texture(texture), surf.w, surf.h)
-    _mysdl2.lib.SDL_FreeSurface(surf)
+    _gaem.lib.SDL_FreeSurface(surf)
     if center:
         img.center()
     return img
@@ -651,23 +649,23 @@ class Font:
         self._height = 0
         self._x = 0
         self._y = 0
-        self._dstrect = _mysdl2.ffi.new('SDL_Rect *')
-        self.line_skip = _mysdl2.lib.TTF_FontLineSkip(self.font)
+        self._dstrect = _gaem.ffi.new('SDL_Rect *')
+        self.line_skip = _gaem.lib.TTF_FontLineSkip(self.font)
 
     def __del__(self):
-        _mysdl2.lib.TTF_CloseFont(self.font)
+        _gaem.lib.TTF_CloseFont(self.font)
 
     def render_text_to_image(self, text, *, color=WHITE):
         if len(color) == 3:
             color = (color[0], color[1], color[2], 255)
-        surf = _mysdl2.lib.TTF_RenderUTF8_Blended(
+        surf = _gaem.lib.TTF_RenderUTF8_Blended(
             self.font, to_cstr(text), color
         )
         raise_for_null(surf)
-        texture = _mysdl2.lib.SDL_CreateTextureFromSurface(g.ren, surf)
+        texture = _gaem.lib.SDL_CreateTextureFromSurface(g.ren, surf)
         raise_for_null(texture)
         img = Image(SDL2Texture(texture), surf.w, surf.h)
-        _mysdl2.lib.SDL_FreeSurface(surf)
+        _gaem.lib.SDL_FreeSurface(surf)
         return img
 
     def draw(
@@ -701,12 +699,12 @@ class Font:
                 h *= sy
                 clip_top = int(min(y, y + h))
                 clip_bottom = int(max(y, y + h))
-            clip_rect = _mysdl2.ffi.new('SDL_Rect *')
+            clip_rect = _gaem.ffi.new('SDL_Rect *')
             clip_rect.x = clip_left
             clip_rect.y = clip_top
             clip_rect.w = clip_right - clip_left
             clip_rect.h = clip_bottom - clip_top
-            ret = _mysdl2.lib.SDL_RenderSetClipRect(g.ren, clip_rect)
+            ret = _gaem.lib.SDL_RenderSetClipRect(g.ren, clip_rect)
             raise_for_neg(ret)
 
         # I should really use something like harfbuzz
@@ -740,7 +738,7 @@ class Font:
                 y += self.line_skip
 
         if clipping:
-            ret = _mysdl2.lib.SDL_RenderSetClipRect(g.ren, NULL)
+            ret = _gaem.lib.SDL_RenderSetClipRect(g.ren, NULL)
             raise_for_neg(ret)
 
     def _calculate_line_widths(self, text, w):
@@ -801,8 +799,8 @@ class Font:
         w = 512  # maybe calculate these?
         h = 512
         if self._surface is not None:
-            _mysdl2.lib.SDL_FreeSurface(self._surface)
-        self._surface = _mysdl2.lib.SDL_CreateRGBSurface(
+            _gaem.lib.SDL_FreeSurface(self._surface)
+        self._surface = _gaem.lib.SDL_CreateRGBSurface(
             0,
             w,
             h,
@@ -820,7 +818,7 @@ class Font:
 
     def _add_glyph(self, c):
         # TODO: I think we'll need padding
-        glyph_surf = _mysdl2.lib.TTF_RenderGlyph32_Blended(
+        glyph_surf = _gaem.lib.TTF_RenderGlyph32_Blended(
             self.font, ord(c), (255, 255, 255, 255)
         )
         # are we out of horizontal space?
@@ -837,7 +835,7 @@ class Font:
         dstrect = self._dstrect
         dstrect.x = self._x
         dstrect.y = self._y
-        ret = _mysdl2.lib.SDL_BlitSurface(
+        ret = _gaem.lib.SDL_BlitSurface(
             glyph_surf, NULL, self._surface, dstrect
         )
         raise_for_neg(ret)
@@ -847,28 +845,28 @@ class Font:
         self._x += glyph_surf.w
         self._height = max(self._height, glyph_surf.h)
         self._glyphs[c] = glyph_image
-        _mysdl2.lib.SDL_FreeSurface(glyph_surf)
+        _gaem.lib.SDL_FreeSurface(glyph_surf)
 
     def _recreate_texture_from_surface(self):
-        t = _mysdl2.lib.SDL_CreateTextureFromSurface(g.ren, self._surface)
+        t = _gaem.lib.SDL_CreateTextureFromSurface(g.ren, self._surface)
         raise_for_null(t)
         self._texture.replace(t)
 
 
 def load_sound(path):
-    chunk = _mysdl2.lib.Mix_LoadWAV(to_cstr(path))
+    chunk = _gaem.lib.Mix_LoadWAV(to_cstr(path))
     raise_for_null(chunk)
     return Sound(chunk)
 
 
 def load_music(path):
-    music = _mysdl2.lib.Mix_LoadMUS(to_cstr(path))
+    music = _gaem.lib.Mix_LoadMUS(to_cstr(path))
     raise_for_null(music)
     return Music(music)
 
 
 def load_font(path, ptsize=14):
-    font = _mysdl2.lib.TTF_OpenFont(to_cstr(path), ptsize)
+    font = _gaem.lib.TTF_OpenFont(to_cstr(path), ptsize)
     raise_for_null(font)
     return Font(font)
 
@@ -896,75 +894,75 @@ def set_background_color(red, green, blue, alpha=255):
 def draw_rect(x, y, w, h, color=WHITE, *, blend_mode=BlendMode.BLEND):
     if len(color) == 3:
         color = (color[0], color[1], color[2], 255)
-    ret = _mysdl2.lib.SDL_SetRenderDrawColor(
+    ret = _gaem.lib.SDL_SetRenderDrawColor(
         g.ren, color[0], color[1], color[2], color[3]
     )
     raise_for_neg(ret)
-    rect = _mysdl2.ffi.new('SDL_Rect *')
+    rect = _gaem.ffi.new('SDL_Rect *')
     rect.x = x
     rect.y = y
     rect.w = w
     rect.h = h
-    ret = _mysdl2.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
+    ret = _gaem.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
     raise_for_neg(ret)
-    ret = _mysdl2.lib.SDL_RenderDrawRect(g.ren, rect)
+    ret = _gaem.lib.SDL_RenderDrawRect(g.ren, rect)
     raise_for_neg(ret)
 
 
 def fill_rect(x, y, w, h, color=WHITE, *, blend_mode=BlendMode.BLEND):
     if len(color) == 3:
         color = (color[0], color[1], color[2], 255)
-    ret = _mysdl2.lib.SDL_SetRenderDrawColor(
+    ret = _gaem.lib.SDL_SetRenderDrawColor(
         g.ren, color[0], color[1], color[2], color[3]
     )
     raise_for_neg(ret)
-    rect = _mysdl2.ffi.new('SDL_Rect *')
+    rect = _gaem.ffi.new('SDL_Rect *')
     rect.x = x
     rect.y = y
     rect.w = w
     rect.h = h
-    ret = _mysdl2.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
+    ret = _gaem.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
     raise_for_neg(ret)
-    ret = _mysdl2.lib.SDL_RenderFillRect(g.ren, rect)
+    ret = _gaem.lib.SDL_RenderFillRect(g.ren, rect)
     raise_for_neg(ret)
 
 
 def draw_line(x1, y1, x2, y2, color=WHITE, *, blend_mode=BlendMode.BLEND):
     if len(color) == 3:
         color = (color[0], color[1], color[2], 255)
-    ret = _mysdl2.lib.SDL_SetRenderDrawColor(
+    ret = _gaem.lib.SDL_SetRenderDrawColor(
         g.ren, color[0], color[1], color[2], color[3]
     )
     raise_for_neg(ret)
-    ret = _mysdl2.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
+    ret = _gaem.lib.SDL_SetRenderDrawBlendMode(g.ren, blend_mode)
     raise_for_neg(ret)
-    ret = _mysdl2.lib.SDL_RenderDrawLine(g.ren, x1, y1, x2, y2)
+    ret = _gaem.lib.SDL_RenderDrawLine(g.ren, x1, y1, x2, y2)
     raise_for_neg(ret)
 
 
 def stop_sounds():
-    ret = _mysdl2.lib.Mix_HaltChannel(-1)
+    ret = _gaem.lib.Mix_HaltChannel(-1)
     raise_for_neg(ret)
 
 
 def stop_music():
-    _mysdl2.lib.Mix_HaltMusic()
+    _gaem.lib.Mix_HaltMusic()
 
 
 def pause_music():
-    _mysdl2.lib.Mix_PauseMusic()
+    _gaem.lib.Mix_PauseMusic()
 
 
 def resume_music():
-    _mysdl2.lib.Mix_ResumeMusic()
+    _gaem.lib.Mix_ResumeMusic()
 
 
 def set_sounds_volume(self, volume):
-    _mysdl2.lib.Mix_MasterVolume(int(volume * SDL_MIX_MAXVOLUME))
+    _gaem.lib.Mix_MasterVolume(int(volume * SDL_MIX_MAXVOLUME))
 
 
 def set_music_volume(self, volume):
-    _mysdl2.lib.Mix_VolumeMusic(int(volume * SDL_MIX_MAXVOLUME))
+    _gaem.lib.Mix_VolumeMusic(int(volume * SDL_MIX_MAXVOLUME))
 
 
 def quit():
@@ -973,22 +971,22 @@ def quit():
 
 def raise_for_neg(ret):
     if ret < 0:
-        err = from_cstr(_mysdl2.lib.SDL_GetError())
+        err = from_cstr(_gaem.lib.SDL_GetError())
         raise GaemError(err)
 
 
 def raise_for_null(ret):
-    if ret == _mysdl2.ffi.NULL:
-        err = from_cstr(_mysdl2.lib.SDL_GetError())
+    if ret == _gaem.ffi.NULL:
+        err = from_cstr(_gaem.lib.SDL_GetError())
         raise GaemError(err)
 
 
 def from_cstr(cstr):
-    return _mysdl2.ffi.string(cstr).decode('utf-8')
+    return _gaem.ffi.string(cstr).decode('utf-8')
 
 
 def to_cstr(s):
-    return _mysdl2.ffi.new('char[]', s.encode('utf-8'))
+    return _gaem.ffi.new('char[]', s.encode('utf-8'))
 
 
 class GaemError(Exception):

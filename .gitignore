@@ -1,5 +1,7 @@
 __pycache__
 .venv
+/.eggs
+/*.egg-info
 /*.o
 /*.c
 /*.so
@@ -7,4 +9,5 @@ __pycache__
 /build_scripts/out
 /build_scripts/prefix
 /build_scripts/src
-/libs
+/build
+/gaem_libs

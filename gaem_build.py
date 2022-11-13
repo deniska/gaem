@@ -15,7 +15,7 @@ ldflags = subprocess.run(
 ).stdout.split()
 
 ldflags += ['-lSDL2_image', '-lSDL2_mixer', '-lSDL2_ttf']
-ldflags += ['-Wl,-rpath=$ORIGIN/libs']
+ldflags += ['-Wl,-rpath=$ORIGIN/gaem_libs']
 
 ffibuilder = FFI()
 
@@ -248,10 +248,10 @@ void Mix_PauseMusic(void);
 void Mix_ResumeMusic(void);
 void Mix_FreeMusic(Mix_Music *music);
 
-int my_poll_event(void);
-SDL_Event * get_my_event_ptr(void);
-uint32_t my_get_event_type(void);
-static const SDL_Event my_event;
+int gaem_poll_event(void);
+SDL_Event * gaem_get_event_ptr(void);
+uint32_t gaem_get_event_type(void);
+static const SDL_Event gaem_event;
 
 extern "Python" void channel_finished_callback(int channel);
 extern "Python" void music_finished_callback(void);
@@ -271,25 +271,25 @@ void TTF_CloseFont(TTF_Font *font);
 )
 
 ffibuilder.set_source(
-    '_mysdl2',
+    '_gaem',
     """
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
 #include <SDL_ttf.h>
 
-SDL_Event my_event;
+SDL_Event gaem_event;
 
-int my_poll_event(void) {
-    return SDL_PollEvent(&my_event);
+int gaem_poll_event(void) {
+    return SDL_PollEvent(&gaem_event);
 }
 
-Uint32 my_get_event_type(void) {
-    return my_event.type;
+Uint32 gaem_get_event_type(void) {
+    return gaem_event.type;
 }
 
-SDL_Event * get_my_event_ptr(void) {
-    return &my_event;
+SDL_Event * gaem_get_event_ptr(void) {
+    return &gaem_event;
 }
 """,
     extra_compile_args=cflags,

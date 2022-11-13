@@ -7,7 +7,7 @@ base_dir = pathlib.Path(__file__).parent
 download_dir = base_dir / 'dl'
 src_dir = base_dir / 'src'
 prefix_dir = base_dir / 'prefix'
-out_dir = base_dir.parent / 'libs'
+out_dir = base_dir.parent / 'gaem_libs'
 
 
 def build_sdl():

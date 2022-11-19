@@ -11,6 +11,11 @@ class Game(gaem.Game):
         self.multiline = True
 
     def on_draw(self):
+        if self.multiline:
+            cw, ch = self.font.calc_size('Hello world', w=self.w)
+        else:
+            cw, ch = self.font.calc_size('Hello world')
+        gaem.draw_rect(10, 20, cw, ch, color=(255, 0, 255))
         gaem.draw_rect(10, 20, self.w, self.h)
         if self.multiline:
             h = self.h

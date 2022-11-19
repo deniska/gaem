@@ -622,7 +622,8 @@ class Gamepad:
             return self.get_axis(name.removeprefix('axis_'))
         elif name.startswith('button_'):
             return self.is_button_pressed(name.removeprefix('button_'))
-        super().__getattr__(name)  # basically raise the usual exception
+        # basically raise
+        return super().__getattribute__(name)
 
 
 @_gaem.ffi.def_extern()
@@ -808,7 +809,7 @@ class Font:
         clipping = False
 
         if w is not None:
-            using_clipping = True
+            clipping = True
             w *= sx
             clip_left = int(min(x, x + w))
             clip_right = int(max(x, x + w))
@@ -860,6 +861,17 @@ class Font:
         if clipping:
             ret = _gaem.lib.SDL_RenderSetClipRect(g.ren, NULL)
             raise_for_neg(ret)
+
+    def calc_size(self, text, w=None):
+        self._ensure_glyphs(text)
+        if w is None:
+            w = sum(self._glyphs[c].width for c in text)
+            h = self.line_skip
+            return w, h
+        lines = self._calculate_line_widths(text, w)
+        w = max(l[0] for l in lines)
+        h = self.line_skip * len(lines)
+        return w, h
 
     def _calculate_line_widths(self, text, w):
         # here we go, first let's calculate lines and widths

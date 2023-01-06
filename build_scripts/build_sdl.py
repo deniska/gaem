@@ -15,12 +15,12 @@ def build_sdl():
     clear_dir(prefix_dir)
     clear_dir(out_dir)
 
-    unpack('SDL2-2.24.1.tar.gz')
+    unpack('SDL2-2.26.2.tar.gz')
     unpack('SDL2_image-2.6.2.tar.gz')
     unpack('SDL2_mixer-2.6.2.tar.gz')
     unpack('SDL2_ttf-2.20.1.tar.gz')
 
-    build('SDL2-2.24.1', '--enable-rpath=no')
+    build('SDL2-2.26.2', '--enable-rpath=no')
 
     with_sdl_prefix = f'--with-sdl-prefix={prefix_dir}'
     build('SDL2_image-2.6.2', with_sdl_prefix)

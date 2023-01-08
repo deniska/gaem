@@ -1,21 +1,39 @@
 import subprocess
+import sys
 from pathlib import Path
 
 from cffi import FFI
 
-sdl2_config = Path(__file__).parent / Path(
-    'build_scripts', 'prefix', 'bin', 'sdl2-config'
-)
+cflags = []
+ldflags = []
 
-cflags = subprocess.run(
-    [sdl2_config, '--cflags'], stdout=subprocess.PIPE, encoding='utf-8'
-).stdout.split()
-ldflags = subprocess.run(
-    [sdl2_config, '--libs'], stdout=subprocess.PIPE, encoding='utf-8'
-).stdout.split()
+if sys.platform == 'linux':
+    sdl2_config = Path(__file__).parent / Path(
+        'build_scripts', 'prefix', 'bin', 'sdl2-config'
+    )
 
-ldflags += ['-lSDL2_image', '-lSDL2_mixer', '-lSDL2_ttf']
-ldflags += ['-Wl,-rpath=$ORIGIN/gaem_libs']
+    cflags += subprocess.run(
+        [sdl2_config, '--cflags'], stdout=subprocess.PIPE, encoding='utf-8'
+    ).stdout.split()
+    ldflags += subprocess.run(
+        [sdl2_config, '--libs'], stdout=subprocess.PIPE, encoding='utf-8'
+    ).stdout.split()
+
+    ldflags += ['-lSDL2_image', '-lSDL2_mixer', '-lSDL2_ttf']
+    ldflags += ['-Wl,-rpath=$ORIGIN/gaem_libs']
+elif sys.platform == 'win32':
+    include_dir = Path(__file__).parent / Path(
+        'build_scripts', 'prefix', 'include'
+    )
+    lib_dir = Path(__file__).parent / Path('build_scripts', 'prefix', 'lib')
+    cflags += ['/I', str(include_dir)]
+    ldflags += [
+        f'/LIBPATH:{lib_dir}',
+        'SDL2.lib',
+        'SDL2_image.lib',
+        'SDL2_mixer.lib',
+        'SDL2_ttf.lib',
+    ]
 
 ffibuilder = FFI()
 

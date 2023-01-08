@@ -1,8 +1,14 @@
 import enum
 import math
+import os
+import pathlib
 import re
+import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+
+if sys.platform == 'win32':
+    os.add_dll_directory(pathlib.Path(__file__).parents[1] / 'gaem_libs')
 
 import _gaem
 

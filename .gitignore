@@ -5,9 +5,12 @@ __pycache__
 /*.o
 /*.c
 /*.so
+/*.pyd
+/Release
 /build_scripts/dl
 /build_scripts/out
 /build_scripts/prefix
 /build_scripts/src
+/build_scripts/extract
 /build
 /gaem_libs

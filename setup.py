@@ -15,6 +15,6 @@ setup(
     cffi_modules=['gaem_build.py:ffibuilder'],
     packages=packages,
     package_data={
-        'gaem_libs': ['*.so.0'],
+        'gaem_libs': ['*.so.0', '*.dll'],
     },
 )

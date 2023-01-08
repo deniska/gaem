@@ -116,7 +116,7 @@ def run(
     height=480,
     x=None,
     y=None,
-    vsync=False,
+    vsync=True,
     resizable=False,
 ):
     ret = _gaem.lib.SDL_Init(SDL_INIT_EVERYTHING)
@@ -147,7 +147,7 @@ def run(
     g.win = _gaem.lib.SDL_CreateWindow(title, x, y, width, height, flags)
     raise_for_null(g.win)
 
-    flags = SDL_RENDERER_ACCELERATED
+    flags = 0
     if vsync:
         flags |= SDL_RENDERER_PRESENTVSYNC
     g.ren = _gaem.lib.SDL_CreateRenderer(g.win, -1, flags)

@@ -1,0 +1,6 @@
+https://www.python.org/ftp/python/3.11.1/Python-3.11.1.tar.xz
+https://github.com/util-linux/util-linux/archive/refs/tags/v2.38.1.tar.gz
+https://www.sqlite.org/2022/sqlite-autoconf-3400100.tar.gz
+https://tukaani.org/xz/xz-5.4.1.tar.xz
+https://www.openssl.org/source/openssl-1.1.1s.tar.gz
+https://github.com/libffi/libffi/releases/download/v3.4.4/libffi-3.4.4.tar.gz

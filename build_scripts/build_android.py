@@ -71,7 +71,7 @@ def build_world():
         'ac_cv_file__dev_ptmx=yes',
         'ac_cv_file__dev_ptc=no',
         'ac_cv_buggy_getaddrinfo=no',
-        '--with-build-python',
+        '--with-build-python=python3.11',
     )
 
 

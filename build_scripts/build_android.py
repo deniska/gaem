@@ -55,6 +55,8 @@ def build_world():
     unpack('xz-5.4.1.tar.xz')
     unpack('openssl-1.1.1s.tar.gz')
     unpack('libffi-3.4.4.tar.gz')
+    unpack('bzip2-latest.tar.gz')
+    build_bzip2('bzip2-1.0.8')
     build_openssl('openssl-1.1.1s')
     build('xz-5.4.1')
     build('sqlite-autoconf-3400100')
@@ -71,7 +73,12 @@ def build_world():
         'ac_cv_file__dev_ptmx=yes',
         'ac_cv_file__dev_ptc=no',
         'ac_cv_buggy_getaddrinfo=no',
+        f'CPPFLAGS=-I{prefix_dir}/include',
+        f'LDFLAGS=-L{prefix_dir}/lib',
+        '--disable-test-modules',
         '--with-build-python=python3.11',
+        '--with-system-ffi',
+        '--without-readline',
     )
 
 
@@ -106,6 +113,14 @@ def build_openssl(name):
     )
     subprocess.check_call(['make', '-j12'], cwd=cwd)
     subprocess.check_call(['make', 'install_sw'], cwd=cwd)
+
+
+def build_bzip2(name):
+    cwd = src_dir / name
+    subprocess.check_call(
+        ['make', f'CC={CC}', f'AR={AR}', f'RANLIB={RANLIB}', 'bzip2'], cwd=cwd
+    )
+    subprocess.check_call(['make', f'PREFIX={prefix_dir}', 'install'], cwd=cwd)
 
 
 def build(name, *opts):

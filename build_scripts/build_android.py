@@ -9,6 +9,7 @@ src_dir = base_dir / 'src'
 prefix_dir = base_dir / 'prefix'
 out_dir = base_dir.parent / 'gaem_libs'
 
+CMAKE = '/home/denis/Android/Sdk/cmake/3.22.1/bin/cmake'
 ANDROID_NDK_HOME = '/home/denis/sdk/android-ndk-r25b'
 TOOLCHAIN = f'{ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64'
 PATH = f'{TOOLCHAIN}/bin:{os.environ["PATH"]}'
@@ -56,6 +57,9 @@ def build_world():
     unpack('openssl-1.1.1s.tar.gz')
     unpack('libffi-3.4.4.tar.gz')
     unpack('bzip2-latest.tar.gz')
+    unpack('SDL2-2.26.2.tar.gz')
+    unpack('SDL2_image-2.6.2.tar.gz')
+    unpack('SDL2_ttf-2.20.1.tar.gz')
     build_bzip2('bzip2-1.0.8')
     build_openssl('openssl-1.1.1s')
     build('xz-5.4.1')
@@ -79,6 +83,16 @@ def build_world():
         '--with-build-python=python3.11',
         '--with-system-ffi',
         '--without-readline',
+    )
+    build(
+        'SDL2-2.26.2',
+        '--enable-hidapi=no',
+        '--enable-rpath=no',
+        'LDFLAGS=-lOpenSLES',
+    )
+    cmake_build('SDL2_image-2.6.2', '-DSDL2IMAGE_SAMPLES=off')
+    cmake_build(
+        'SDL2_ttf-2.20.1', '-DSDL2TTF_VENDORED=on', '-DSDL2TTF_SAMPLES=off'
     )
 
 
@@ -118,9 +132,33 @@ def build_openssl(name):
 def build_bzip2(name):
     cwd = src_dir / name
     subprocess.check_call(
-        ['make', f'CC={CC}', f'AR={AR}', f'RANLIB={RANLIB}', 'bzip2'], cwd=cwd
+        ['make', '-j12', f'CC={CC}', f'AR={AR}', f'RANLIB={RANLIB}', 'bzip2'],
+        cwd=cwd,
     )
     subprocess.check_call(['make', f'PREFIX={prefix_dir}', 'install'], cwd=cwd)
+
+
+def cmake_build(name, *opts):
+    cwd = src_dir / name / 'build'
+    cwd.mkdir(exist_ok=True)
+    subprocess.check_call(
+        [
+            CMAKE,
+            '..',
+            f'-DCMAKE_INSTALL_PREFIX={prefix_dir}',
+            f'-DCMAKE_PREFIX_PATH={prefix_dir}',
+            f'-DCMAKE_TOOLCHAIN_FILE={ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake',
+            f'-DANDROID_PLATFORM={API}',
+            f'-DANDROID_TOOLCHAIN_NAME={TARGET}',
+            '-DANDROID_ABI=arm64-v8a',
+            f'-DSDL2_LIBRARY={prefix_dir}/lib/libSDL2-2.0.so',
+            f'-DSDL2_INCLUDE_DIR={prefix_dir}/include/SDL2',
+            *opts,
+        ],
+        cwd=cwd,
+    )
+    subprocess.check_call(['make', '-j12'], cwd=cwd)
+    subprocess.check_call(['make', 'install'], cwd=cwd)
 
 
 def build(name, *opts):

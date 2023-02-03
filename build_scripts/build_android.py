@@ -60,6 +60,8 @@ def build_world():
     unpack('SDL2-2.26.2.tar.gz')
     unpack('SDL2_image-2.6.2.tar.gz')
     unpack('SDL2_ttf-2.20.1.tar.gz')
+    unpack('SDL2_mixer-2.6.2.tar.gz')
+    download_mixer_deps('SDL2_mixer-2.6.2')
     build_bzip2('bzip2-1.0.8')
     build_openssl('openssl-1.1.1s')
     build('xz-5.4.1')
@@ -93,6 +95,11 @@ def build_world():
     cmake_build('SDL2_image-2.6.2', '-DSDL2IMAGE_SAMPLES=off')
     cmake_build(
         'SDL2_ttf-2.20.1', '-DSDL2TTF_VENDORED=on', '-DSDL2TTF_SAMPLES=off'
+    )
+    cmake_build(
+        'SDL2_mixer-2.6.2',
+        '-DSDL2MIXER_VENDORED=ON',
+        '-DSDL2MIXER_SAMPLES=OFF',
     )
 
 
@@ -159,6 +166,11 @@ def cmake_build(name, *opts):
     )
     subprocess.check_call(['make', '-j12'], cwd=cwd)
     subprocess.check_call(['make', 'install'], cwd=cwd)
+
+
+def download_mixer_deps(name):
+    cwd = src_dir / name / 'external'
+    subprocess.check_call([cwd / 'download.sh'], cwd=cwd)
 
 
 def build(name, *opts):

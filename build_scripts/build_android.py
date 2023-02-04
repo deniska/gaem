@@ -6,6 +6,7 @@ import subprocess
 base_dir = pathlib.Path(__file__).parent
 download_dir = base_dir / 'dl'
 src_dir = base_dir / 'src'
+py_dir = base_dir / 'py'
 prefix_dir = base_dir / 'prefix'
 out_dir = base_dir.parent / 'gaem_libs'
 
@@ -14,7 +15,7 @@ ANDROID_NDK_HOME = '/home/denis/sdk/android-ndk-r25b'
 TOOLCHAIN = f'{ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64'
 PATH = f'{TOOLCHAIN}/bin:{os.environ["PATH"]}'
 TARGET = 'aarch64-linux-android'  # TODO: build for all targets
-API = '21'
+API = '23'
 AR = f'{TOOLCHAIN}/bin/llvm-ar'
 CC = f'{TOOLCHAIN}/bin/{TARGET}{API}-clang'
 AS = CC
@@ -50,6 +51,7 @@ def build_world():
     clear_dir(src_dir)
     clear_dir(prefix_dir)
     clear_dir(out_dir)
+    clear_dir(py_dir)
     unpack('Python-3.11.1.tar.xz')
     unpack('util-linux-2.38.1.tar.gz')
     unpack('sqlite-autoconf-3400100.tar.gz')
@@ -79,12 +81,14 @@ def build_world():
         'ac_cv_file__dev_ptmx=yes',
         'ac_cv_file__dev_ptc=no',
         'ac_cv_buggy_getaddrinfo=no',
+        'CFLAGS=-fPIC',
         f'CPPFLAGS=-I{prefix_dir}/include',
         f'LDFLAGS=-L{prefix_dir}/lib',
         '--disable-test-modules',
         '--with-build-python=python3.11',
         '--with-system-ffi',
         '--without-readline',
+        '--enable-shared',
     )
     build(
         'SDL2-2.26.2',
@@ -101,15 +105,13 @@ def build_world():
         '-DSDL2MIXER_VENDORED=ON',
         '-DSDL2MIXER_SAMPLES=OFF',
     )
+    build_cffi_and_emit_gaem_c()
+    build_gaem()
     # TODO:
-    # python3.11 -m venv crossenv_build
-    # venv_build/bin/pip install crossenv cffi
-    # venv_build/bin/python -m crossenv /home/denis/private/prg/gaem/build_scripts/prefix/bin/python3 cross_venv
-    # cross_venv/bin/cross-pip install cffi
-    # venv_build/bin/python gaem_build --only_emit_c_code _gaem.c
-    # compile _gaem.c into _gaem.so
     # copy to out_dir everything we need
+    # very cursed step of replacing .so.1.0 with .so\0\0\0\0
     # fiddle with rpaths?
+    # compile everything to .pyc?
 
 
 def unpack(name):
@@ -180,6 +182,72 @@ def cmake_build(name, *opts):
 def download_mixer_deps(name):
     cwd = src_dir / name / 'external'
     subprocess.check_call([cwd / 'download.sh'], cwd=cwd)
+
+
+def build_cffi_and_emit_gaem_c():
+    build_venv = py_dir / 'venv'
+    build_pip = pathlib.Path(build_venv, 'bin', 'pip')
+    build_python = pathlib.Path(build_venv, 'bin', 'python')
+    crossenv = py_dir / 'crossenv'
+    cross_pip = pathlib.Path(crossenv, 'bin', 'cross-pip')
+    gaem_build_script = pathlib.Path(base_dir, '..', 'gaem_build.py')
+
+    subprocess.check_call(['python3.11', '-m', 'venv', build_venv])
+    subprocess.check_call([build_pip, 'install', 'crossenv', 'cffi'])
+    subprocess.check_call(
+        [build_python, '-m', 'crossenv', f'{prefix_dir}/bin/python3', crossenv]
+    )
+    subprocess.check_call([cross_pip, 'install', 'cffi'])
+    subprocess.check_call(
+        [
+            build_python,
+            gaem_build_script,
+            '--only-emit-c-code',
+            src_dir / '_gaem.c',
+        ]
+    )
+
+
+def build_gaem():
+    subprocess.check_call(
+        [
+            CC,
+            '-Wsign-compare',
+            '-DNDEBUG',
+            '-g',
+            '-fwrapv',
+            '-O3',
+            '-Wall',
+            '-fPIC',
+            f'-I{prefix_dir}/include',
+            f'-I{prefix_dir}/include/SDL2',
+            f'-I{prefix_dir}/include/python3.11',
+            '-c',
+            src_dir / '_gaem.c',
+            '-o',
+            src_dir / '_gaem.o',
+            '-DGL_GLEXT_PROTOTYPES',
+            '-D_REENTRANT',
+            '-D_THREAD_SAFE',
+        ]
+    )
+    # ./_gaem.o -L/home/denis/.pyenv/versions/3.11.1/lib -o ./_gaem.cpython-311-x86_64-linux-gnu.so -L/home/denis/private/prg/gaem/build_scripts/prefix/lib -lSDL2 -lSDL2_image -lSDL2_mixer -lSDL2_ttf -Wl,-rpath=$ORIGIN/gaem_libs
+
+    subprocess.check_call(
+        [
+            LD,
+            '-shared',
+            f'-L{prefix_dir}/lib',
+            src_dir / '_gaem.o',
+            '-o',
+            f'{prefix_dir}/lib/python3.11/site-packages/_gaem.cpython-311.so',
+            '-lSDL2',
+            '-lSDL2_image',
+            '-lSDL2_mixer',
+            '-lSDL2_ttf',
+            '-rpath=$ORIGIN/../..',
+        ]
+    )
 
 
 def build(name, *opts):

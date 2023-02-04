@@ -13,7 +13,7 @@ CMAKE = '/home/denis/Android/Sdk/cmake/3.22.1/bin/cmake'
 ANDROID_NDK_HOME = '/home/denis/sdk/android-ndk-r25b'
 TOOLCHAIN = f'{ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64'
 PATH = f'{TOOLCHAIN}/bin:{os.environ["PATH"]}'
-TARGET = 'aarch64-linux-android'
+TARGET = 'aarch64-linux-android'  # TODO: build for all targets
 API = '21'
 AR = f'{TOOLCHAIN}/bin/llvm-ar'
 CC = f'{TOOLCHAIN}/bin/{TARGET}{API}-clang'
@@ -101,6 +101,15 @@ def build_world():
         '-DSDL2MIXER_VENDORED=ON',
         '-DSDL2MIXER_SAMPLES=OFF',
     )
+    # TODO:
+    # python3.11 -m venv crossenv_build
+    # venv_build/bin/pip install crossenv cffi
+    # venv_build/bin/python -m crossenv /home/denis/private/prg/gaem/build_scripts/prefix/bin/python3 cross_venv
+    # cross_venv/bin/cross-pip install cffi
+    # venv_build/bin/python gaem_build --only_emit_c_code _gaem.c
+    # compile _gaem.c into _gaem.so
+    # copy to out_dir everything we need
+    # fiddle with rpaths?
 
 
 def unpack(name):
@@ -125,7 +134,7 @@ def build_openssl(name):
     subprocess.check_call(
         [
             cwd / 'Configure',
-            'android-arm64',
+            'android-arm64',  # TODO: switch depending on TARGET
             f'-D__ANDROID_API__={API}',
             f'--prefix={prefix_dir}',
             f'--openssldir={prefix_dir}',
@@ -157,7 +166,7 @@ def cmake_build(name, *opts):
             f'-DCMAKE_TOOLCHAIN_FILE={ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake',
             f'-DANDROID_PLATFORM={API}',
             f'-DANDROID_TOOLCHAIN_NAME={TARGET}',
-            '-DANDROID_ABI=arm64-v8a',
+            '-DANDROID_ABI=arm64-v8a',  # TODO: Detect depending on target?
             f'-DSDL2_LIBRARY={prefix_dir}/lib/libSDL2-2.0.so',
             f'-DSDL2_INCLUDE_DIR={prefix_dir}/include/SDL2',
             *opts,

@@ -6,8 +6,11 @@ from cffi import FFI
 
 cflags = []
 ldflags = []
+only_emit_c_code = False
 
-if sys.platform == 'linux':
+if len(sys.argv) > 2 and sys.argv[1] == '--only-emit-c-code':
+    only_emit_c_code = True
+elif sys.platform == 'linux':
     sdl2_config = Path(__file__).parent / Path(
         'build_scripts', 'prefix', 'bin', 'sdl2-config'
     )
@@ -359,4 +362,7 @@ SDL_Event * gaem_get_event_ptr(void) {
 )
 
 if __name__ == '__main__':
-    ffibuilder.compile(verbose=True)
+    if only_emit_c_code:
+        ffibuilder.emit_c_code(sys.argv[2])
+    else:
+        ffibuilder.compile(verbose=True)

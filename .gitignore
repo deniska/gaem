@@ -12,5 +12,8 @@ __pycache__
 /build_scripts/prefix
 /build_scripts/src
 /build_scripts/extract
+/build_scripts/_gaem.c
+/build_scripts/cross_venv
+/build_scripts/crossenv_build
 /build
 /gaem_libs
